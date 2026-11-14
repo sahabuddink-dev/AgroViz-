@@ -136,7 +136,7 @@ Replace `<PHASE GOAL>` with:
 
 - [x] **Phase 1**: Project setup, health check, raw data manifest, backend & frontend scaffold (Completed).
 - [x] **Phase 2**: Data layer — loaders, cleaning rules, reshaping, profiling, immutability verification, automated tests (Completed).
-- [ ] **Phase 3**: Frontend shell with navigation for all modules + Dataset Management.
+- [x] **Phase 3**: Frontend shell with navigation for all modules + Dataset Management (Completed).
 - [ ] **Phase 4**: Weather module.
 - [ ] **Phase 5**: Pink Bollworm module.
 - [ ] **Phase 6**: Soil module.
