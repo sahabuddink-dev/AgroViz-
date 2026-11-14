@@ -5,6 +5,7 @@ BACKEND_DIR = Path(__file__).resolve().parent.parent
 BASE_DIR = BACKEND_DIR.parent
 DATA_DIR = BASE_DIR / "data"
 DATA_RAW_DIR = DATA_DIR / "raw"
+DATA_PROCESSED_DIR = DATA_DIR / "processed"
 DATA_UPLOADS_DIR = DATA_DIR / "uploads"
 
 # API settings

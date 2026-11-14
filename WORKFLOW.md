@@ -132,6 +132,19 @@ Replace `<PHASE GOAL>` with:
 | 9 | AI Analysis page: year-on-year descriptive screening, shared degree-day view, locked validated-risk section with its reasons and data requirements. |
 | 10 | Full test run, README with setup instructions, UI polish, responsive check, and a list of known limitations. |
 
+### 5.3 Phase Status Tracker
+
+- [x] **Phase 1**: Project setup, health check, raw data manifest, backend & frontend scaffold (Completed).
+- [x] **Phase 2**: Data layer — loaders, cleaning rules, reshaping, profiling, immutability verification, automated tests (Completed).
+- [ ] **Phase 3**: Frontend shell with navigation for all modules + Dataset Management.
+- [ ] **Phase 4**: Weather module.
+- [ ] **Phase 5**: Pink Bollworm module.
+- [ ] **Phase 6**: Soil module.
+- [ ] **Phase 7**: Crop Health module.
+- [ ] **Phase 8**: Overview dashboard with interactive Leaflet map.
+- [ ] **Phase 9**: AI Analysis page (YoY screening, shared degree-day, locked risk).
+- [ ] **Phase 10**: Testing, README, polish, responsive check, final delivery.
+
 ## 6. Verify each phase yourself
 
 Run these in two Terminal tabs.
