@@ -48,3 +48,32 @@ export const getWeatherSummary = async (start = null, end = null) => {
   const response = await apiClient.get('/api/weather/summary', { params });
   return response.data;
 };
+
+// Pink Bollworm APIs
+export const getDegreeDays = async (paramSet = 'both', start = '2023-06-01', end = null) => {
+  const params = { param_set: paramSet, start };
+  if (end) params.end = end;
+  const response = await apiClient.get('/api/analysis/degree-days', { params });
+  return response.data;
+};
+
+export const getPBWContext = async () => {
+  const response = await apiClient.get('/api/pbw/context');
+  return response.data;
+};
+
+export const getPBWStatus = async () => {
+  const response = await apiClient.get('/api/pbw/status');
+  return response.data;
+};
+
+export const getPBWTemplateURL = () => `${API_BASE_URL}/api/pbw/template`;
+
+export const uploadPBWObservations = async (file) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  const response = await apiClient.post('/api/pbw/upload', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return response.data;
+};

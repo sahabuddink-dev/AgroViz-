@@ -6,7 +6,7 @@ const NAV_ITEMS = [
   { id: 'overview', label: 'Overview Dashboard', icon: '📊', status: 'Phase 8', badgeColor: 'gray' },
   { id: 'crop_health', label: 'Crop Health (S2)', icon: '🛰️', status: 'Phase 7', badgeColor: 'gray' },
   { id: 'soil', label: 'Soil Conditions', icon: '🌍', status: 'Phase 6', badgeColor: 'gray' },
-  { id: 'pbw', label: 'Pink Bollworm (PBW)', icon: '🐛', status: 'Phase 5', badgeColor: 'gray' },
+  { id: 'pbw', label: 'Pink Bollworm (PBW)', icon: '🐛', status: 'Phase 5 (Active)', badgeColor: 'green' },
   { id: 'ai_analysis', label: 'AI Analysis', icon: '🧠', status: 'Phase 9', badgeColor: 'gray' },
   { id: 'about', label: 'About & Citations', icon: 'ℹ️', status: 'Reference', badgeColor: 'blue' },
 ];

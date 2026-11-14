@@ -5,6 +5,7 @@ import Header from './components/Header';
 import Footer from './components/Footer';
 import DatasetManagement from './pages/DatasetManagement';
 import Weather from './pages/Weather';
+import PinkBollworm from './pages/PinkBollworm';
 import ModulePlaceholder from './pages/ModulePlaceholder';
 import About from './pages/About';
 
@@ -67,6 +68,8 @@ export default function App() {
 
           {activeTab === 'weather' && <Weather />}
 
+          {activeTab === 'pbw' && <PinkBollworm />}
+
           {activeTab === 'datasets' && (
             <DatasetManagement
               registryData={datasetsResponse?.data}
@@ -76,7 +79,7 @@ export default function App() {
 
           {activeTab === 'about' && <About />}
 
-          {['overview', 'crop_health', 'soil', 'pbw', 'ai_analysis'].includes(activeTab) && (
+          {['overview', 'crop_health', 'soil', 'ai_analysis'].includes(activeTab) && (
             <ModulePlaceholder
               moduleId={activeTab}
               onInspectDataset={handleInspectDataset}

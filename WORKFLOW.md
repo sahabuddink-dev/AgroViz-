@@ -138,7 +138,7 @@ Replace `<PHASE GOAL>` with:
 - [x] **Phase 2**: Data layer — loaders, cleaning rules, reshaping, profiling, immutability verification, automated tests (Completed).
 - [x] **Phase 3**: Frontend shell with navigation for all modules + Dataset Management (Completed).
 - [x] **Phase 4**: Weather module (Completed).
-- [ ] **Phase 5**: Pink Bollworm module.
+- [x] **Phase 5**: Pink Bollworm module (Completed).
 - [ ] **Phase 6**: Soil module.
 - [ ] **Phase 7**: Crop Health module.
 - [ ] **Phase 8**: Overview dashboard with interactive Leaflet map.
