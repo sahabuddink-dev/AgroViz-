@@ -77,3 +77,29 @@ export const uploadPBWObservations = async (file) => {
   });
   return response.data;
 };
+
+// Soil Conditions APIs (Phase 6)
+export const getSoilMoisture = async (start = null, end = null, limit = null) => {
+  const params = {};
+  if (start) params.start = start;
+  if (end) params.end = end;
+  if (limit) params.limit = limit;
+  const response = await apiClient.get('/api/soil/moisture', { params });
+  return response.data;
+};
+
+export const getSoilProperties = async () => {
+  const response = await apiClient.get('/api/soil/properties');
+  return response.data;
+};
+
+export const getSoilTemplateURL = () => `${API_BASE_URL}/api/soil/template`;
+
+export const uploadSoilSensorLog = async (file) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  const response = await apiClient.post('/api/soil/sensor-upload', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return response.data;
+};

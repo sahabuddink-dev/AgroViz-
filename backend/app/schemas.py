@@ -3,7 +3,14 @@ from pydantic import BaseModel, Field
 
 T = TypeVar("T")
 
-ProvenanceType = Literal["measured", "calculated", "model_estimated", "unavailable"]
+ProvenanceType = Literal[
+    "measured",
+    "calculated",
+    "model_estimated",
+    "published_literature",
+    "user_provided",
+    "unavailable",
+]
 
 class BaseResponse(BaseModel, Generic[T]):
     """Standard API contract response wrapper for all AgroViz endpoints (CLAUDE.md Section 8)."""

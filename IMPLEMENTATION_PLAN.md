@@ -17,9 +17,9 @@ To maintain scientific continuity, backward compatibility, and rigorous test cov
 | 3      | Frontend Shell, API Client, Dataset Registry & Profiling UI | COMPLETED (v1) |
 | 4      | Weather Monitoring Module (Daily series, monthly summaries) | COMPLETED (v1) |
 | 5      | Pink Bollworm Module (Degree-day engine, Annexures context) | COMPLETED (v1) |
+| 6      | Soil Module (ERA5 3-layer, SoilGrids profile, sensor slot)  | COMPLETED (v1) |
 +--------+-------------------------------------------------------------+----------------+
-| 6      | Soil Module (ERA5 3-layer, SoilGrids profile, sensor slot)  | PENDING (Next) |
-| 7      | Crop Health & Multispectral Engine (S2, GeoTIFF, band math) | PENDING        |
+| 7      | Crop Health & Multispectral Engine (S2, GeoTIFF, band math) | PENDING (Next) |
 | 8      | Spatial Field Management & 3-Column Interactive GIS Layout  | PENDING        |
 | 9      | AI Analysis, Evidence-Based Alert Engine & Report Generator | PENDING        |
 | 10     | Comprehensive Verification, Full Test Suite & Final Delivery| PENDING        |
@@ -46,14 +46,15 @@ To maintain scientific continuity, backward compatibility, and rigorous test cov
 
 ### Phase 6 — Soil Conditions Module & In-Situ Sensor Ingestion
 - **Backend**:
-  - `GET /api/soil/moisture`: Return 3-depth daily moisture time series (0–7 cm, 7–28 cm, 28–100 cm) from cleaned ERA5-Land data with depth-correlation metrics.
-  - `GET /api/soil/properties`: Return SoilGrids physical depth profiles (Clay, Sand, Silt, pH, SOC) across 6 standardized depths with USDA texture classification.
-  - `POST /api/soil/sensor-upload`: Accept in-situ capacitive probe CSV, validate against `soil_sensor_template.csv`, and store in `data/uploads/`.
+  - `GET /api/soil/moisture`: Return 3-depth daily moisture time series (0–7 cm, 7–28 cm, 28–100 cm) from cleaned ERA5-Land data with depth-wise descriptive statistics and actual Pearson correlations.
+  - `GET /api/soil/properties`: Return SoilGrids physical depth profiles (Clay, Sand, Silt, pH, SOC) across 6 standardized depths with USDA texture classification (Clay).
+  - `POST /api/soil/sensor-upload`: Accept in-situ capacitive probe CSV, validate against `soil_sensor_template.csv`, safely normalize moisture units, and store in `data/uploads/` with `user_provided` provenance.
+  - `GET /api/soil/template`: Provide standardized CSV template download.
 - **Frontend**:
-  - Three-layer moisture time-series chart with soil moisture deficit thresholds.
-  - SoilGrids vertical depth profile visualization (clay/sand/silt stacking).
-  - USDA texture ternary diagram representation.
-  - Dedicated "In-Situ Field Sensor" staging slot with CSV upload dropzone.
+  - Three-layer moisture time-series chart with descriptive stats and depth comparison.
+  - SoilGrids vertical depth profile visualization (clay/sand/silt stacking and pH/SOC depth trends).
+  - USDA texture classification display.
+  - Dedicated "In-Situ Field Sensor" staging slot with CSV upload dropzone, unit normalization feedback, and template download.
 
 ### Phase 7 — Crop Health & Multispectral Raster Engine
 - **Backend**:

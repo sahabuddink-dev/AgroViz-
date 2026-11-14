@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .config import APP_TITLE, APP_DESCRIPTION, APP_VERSION, ALLOWED_ORIGINS
-from .routers import health, datasets, weather, pbw, analysis
+from .routers import health, datasets, weather, pbw, analysis, soil
 
 app = FastAPI(
     title=APP_TITLE,
@@ -24,6 +24,7 @@ app.include_router(datasets.router)
 app.include_router(weather.router)
 app.include_router(pbw.router)
 app.include_router(analysis.router)
+app.include_router(soil.router)
 
 @app.get("/")
 def root():

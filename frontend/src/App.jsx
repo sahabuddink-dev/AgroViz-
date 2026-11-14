@@ -5,6 +5,7 @@ import Header from './components/Header';
 import Footer from './components/Footer';
 import DatasetManagement from './pages/DatasetManagement';
 import Weather from './pages/Weather';
+import Soil from './pages/Soil';
 import PinkBollworm from './pages/PinkBollworm';
 import About from './pages/About';
 
@@ -66,6 +67,8 @@ export default function App() {
           )}
 
           {activeTab === 'weather' && <Weather />}
+
+          {activeTab === 'soil' && <Soil />}
 
           {activeTab === 'pbw' && <PinkBollworm />}
 

@@ -24,7 +24,7 @@ This document defines the operating rules, verification checklists, and phase-by
 - [x] **Phase 3**: Frontend Application Shell, API Client, Dataset Registry & Profiling UI *(Completed)*.
 - [x] **Phase 4**: Weather Monitoring Module (Daily series, monthly summaries, SVG charts) *(Completed)*.
 - [x] **Phase 5**: Pink Bollworm Module (Degree-day calculator, historical context, CSV template/upload) *(Completed)*.
-- [ ] **Phase 6**: Soil Conditions Module (ERA5 3-layer moisture, SoilGrids profile, in-situ sensor upload slot).
+- [x] **Phase 6**: Soil Conditions Module (ERA5 3-layer moisture, SoilGrids profile, in-situ sensor upload slot) *(Completed)*.
 - [ ] **Phase 7**: Crop Health & Multispectral Raster Engine (Sentinel-2 index series, GeoTIFF validation, band math).
 - [ ] **Phase 8**: Spatial Field Management & 3-Column Interactive GIS Workspace (Leaflet map, field creation, layer overlays).
 - [ ] **Phase 9**: AI Analysis, Evidence-Based Alert Engine & Field Health Reporting (Agronomic rules, YoY screening, locked risk, report export).
@@ -58,13 +58,14 @@ Stop after Phase N and wait for my review and confirmation.
 ## 4. Verification Checklists for Each Phase
 
 ### Phase 6 (Soil Conditions Module) Checklist
-- [ ] `GET /api/soil/moisture` returns 580 daily records across 3 depths with correlation metrics.
-- [ ] `GET /api/soil/properties` returns SoilGrids 30-row profile with clay/sand/silt/pH/SOC values and USDA texture classification.
-- [ ] `POST /api/soil/sensor-upload` validates schema against `soil_sensor_template.csv` and stores in `data/uploads/`.
-- [ ] Frontend displays 3-depth moisture chart with soil moisture deficit threshold lines.
-- [ ] Vertical depth profile chart renders physical property distributions.
-- [ ] In-situ field sensor upload slot provides sample template download and validation feedback.
-- [ ] Tests verify data loading, depth ranges, and CSV upload validation.
+- [ ] `GET /api/soil/moisture` returns 580 daily records across 3 depths with depth-wise descriptive statistics and actual correlations.
+- [ ] `GET /api/soil/properties` returns SoilGrids 30-row profile with clay/sand/silt/pH/SOC values across 6 depths and USDA texture classification (Clay).
+- [ ] `POST /api/soil/sensor-upload` validates schema against `soil_sensor_template.csv`, normalizes moisture units consistently, and stores in `data/uploads/`.
+- [ ] `GET /api/soil/template` provides downloadable standardized CSV template.
+- [ ] Frontend displays 3-depth moisture time-series chart with descriptive statistics and depth comparison.
+- [ ] Vertical depth profile chart renders physical property distributions and USDA texture classification.
+- [ ] In-situ field sensor upload slot provides sample template download, unit normalization, and validation feedback.
+- [ ] Tests verify data loading, depth ranges, statistics, correlations, unit normalization, and CSV upload validation.
 
 ### Phase 7 (Crop Health & Multispectral Engine) Checklist
 - [ ] `GET /api/crop/indices` serves cleaned daily Sentinel-2 NDVI, NDRE, NDMI series.

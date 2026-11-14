@@ -34,7 +34,7 @@ AgroViz incorporates nine canonical datasets in `data/raw/` representing the Vid
 - **Cleaning & Consolidation**:
   - Raw 309 scene rows reduce to 295 rows after removing 14 tile-overlap duplicates (keeping higher valid pixel count).
   - 3 rows with `NDVI_count` $< 5000$ are flagged as partial tiles.
-  - Multi-tile daily observations are merged into 80 distinct daily dates using simple area-weighted means.
+  - Multi-tile daily observations are merged into 80 distinct daily dates using simple unweighted means across valid overlapping tiles (excluding partial tiles with <5,000 valid pixels).
 - **Inherent Limitations**:
   - **No Cropland Mask**: Metrics represent the entire 10 km circular AOI (bare soil, grasslands, diverse crops, roads, urban areas), not isolated cotton parcels.
   - **Monsoon Cloud Gap**: Zero valid optical observations exist in July 2023 and July 2024 due to persistent cloud cover. The platform strictly presents this gap without interpolation.
@@ -47,7 +47,7 @@ AgroViz incorporates nine canonical datasets in `data/raw/` representing the Vid
 ### 2.4 ISRIC SoilGrids 2.0 (Physical Properties)
 - **Variables**: Clay %, Silt %, Sand %, pH in $\text{H}_2\text{O}$, and Soil Organic Carbon ($\text{g}/\text{kg}$) across 6 standardized depth intervals ($0\text{--}5, 5\text{--}15, 15\text{--}30, 30\text{--}60, 60\text{--}100, 100\text{--}200\text{ cm}$).
 - **Reshaping**: Transformed from wide 30-column format into long 30-row profile.
-- **Classification**: Area-weighted means (Clay $38.4\%$, Silt $36.0\%$, Sand $25.6\%$) classify under the USDA soil texture triangle as **Clay / Silty Clay**.
+- **Classification**: Unweighted pixel means across the 4,419 AOI pixels (Clay $38.4\%$, Silt $36.0\%$, Sand $25.6\%$) averaged across the 6 depth intervals classify under the USDA soil texture triangle as **Clay**.
 - **Inherent Limitation**: Static digital soil mapping product generated via machine learning on global point databases; does not reflect real-time nutrient flux or seasonal fertilizer application.
 
 ### 2.5 Historical Entomological Survey Context (Annexures 3 & 4)
@@ -80,10 +80,11 @@ The existing codebase implements four verified, deterministic mathematical and s
 | 3. USDA Soil Texture Classifier  | Point-in-polygon matching on USDA ternary diagram: |
 |    (Pedological Texture Engine)  |   Inputs: Clay %, Silt %, Sand %                   |
 |                                  |   Output: Clay / Silty Clay / Clay Loam            |
-| 4. Deterministic Alert Rules     | Threshold-based multi-factor rules:                |
-|    (Agronomic Rules Engine)      |   - Soil moisture deficit thresholds               |
-|                                  |   - Phenological generation thresholds             |
-|                                  |   - Satellite data gap duration checks             |
+| 4. Deterministic Alert Rules     | Threshold-based rules:                             |
+|    (Agronomic Rules Engine)      |   - Cited phenological generation thresholds       |
+|                                  |   - Optical satellite cloud gap duration checks    |
+|                                  |   - Soil moisture deficit rules (provisional,      |
+|                                  |     disabled until calibrated with retention data) |
 +----------------------------------+----------------------------------------------------+
 ```
 

@@ -48,7 +48,12 @@ For multi-band rasters, bands must either follow standard band ordering or speci
 
 Used for ingesting capacitive FDR/TDR soil probe time series or soil lab analysis logs.
 
-### 3.1 Column Specifications
+### 3.1 Column Specifications & Unit Normalization
+
+The ingestion pipeline handles both volumetric fraction ($\text{m}^3/\text{m}^3$, values $0.0\text{--}1.0$) and volumetric percentage (%, values $0\text{--}100$). During ingestion:
+- Values $> 1.0$ and $\le 100.0$ are normalized to standard volumetric water content: $\theta = \text{value} / 100.0\text{ m}^3/\text{m}^3$.
+- Values $\le 1.0$ are retained as $\text{m}^3/\text{m}^3$.
+- Both `original_value`, `original_unit`, and `normalized_moisture_m3m3` are preserved in the processed schema with `provenance: "user_provided"`.
 
 | Column Name | Required | Data Type | Physical Range | Description & Unit |
 |---|---|---|---|---|
@@ -60,6 +65,10 @@ Used for ingesting capacitive FDR/TDR soil probe time series or soil lab analysi
 | `electrical_conductivity`| No | Float | $0.0\text{ to }20.0$ | Bulk soil EC ($\text{dS}/\text{m}$) |
 
 ### 3.2 Sample Template (`soil_sensor_template.csv`)
+
+> [!IMPORTANT] Illustrative Schema Template Only
+> The sample rows below are synthetic demonstration values demonstrating expected format, data types, and headers. They are **NOT** measured field observations.
+
 ```csv
 date,sensor_id,depth_cm,soil_moisture,soil_temperature,electrical_conductivity
 2024-07-01,SENSOR_PDKV_01,10.0,0.342,28.4,0.45
@@ -90,6 +99,10 @@ Used for ingesting on-farm micro-climate station data (e.g., Davis Vantage, Camp
 | `solar_radiation` | No | Float | $\ge 0.0$ | Solar insolation ($\text{MJ}/\text{m}^2/\text{day}$) |
 
 ### 4.2 Sample Template (`weather_station_template.csv`)
+
+> [!IMPORTANT] Illustrative Schema Template Only
+> The sample rows below are synthetic demonstration values demonstrating expected format, data types, and headers. They are **NOT** measured field observations.
+
 ```csv
 date,station_id,t_mean,t_max,t_min,rh_mean,rainfall_mm,solar_radiation
 2024-07-01,STATION_AKOLA_FARM1,30.2,35.4,25.8,78.2,12.4,18.5
@@ -119,6 +132,10 @@ Standardized template for uploading field-verified pest observations (trap catch
 | `method` | Yes | String | Free text | Sampling methodology |
 
 ### 5.2 Sample Template (`pbw_scouting_template.csv`)
+
+> [!IMPORTANT] Illustrative Schema Template Only
+> The sample rows below are synthetic demonstration values demonstrating expected format, data types, and headers. They are **NOT** measured field observations.
+
 ```csv
 date,latitude,longitude,location_name,observation_type,value,unit,crop_stage,source,method
 2024-08-15,20.7085,77.0045,Plot_7A,trap_count,8.0,moths/trap/night,flowering,FieldScout_PKV,Pheromone_Delta_Trap

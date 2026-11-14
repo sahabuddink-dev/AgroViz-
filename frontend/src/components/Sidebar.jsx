@@ -2,6 +2,7 @@ import React from 'react';
 
 const NAV_ITEMS = [
   { id: 'weather', label: 'Weather Monitoring', icon: '🌦️', status: 'Live', badgeColor: 'green' },
+  { id: 'soil', label: 'Soil Conditions', icon: '🌍', status: 'Live', badgeColor: 'green' },
   { id: 'pbw', label: 'Pink Bollworm (PBW)', icon: '🐛', status: 'Active', badgeColor: 'green' },
   { id: 'datasets', label: 'Dataset Management', icon: '📁', status: 'Active', badgeColor: 'green' },
   { id: 'about', label: 'Methodology & Sources', icon: 'ℹ️', status: 'Reference', badgeColor: 'blue' },

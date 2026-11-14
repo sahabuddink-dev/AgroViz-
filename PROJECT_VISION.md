@@ -68,7 +68,7 @@ AgroViz provides **two complementary operational workflows**:
    - Local station weather CSV.
    - Field scouting observations (pheromone trap counts, locule damage %).
 3. **Validation & Processing**: System verifies coordinate reference systems (CRS), band requirements, date ranges, and data integrity.
-4. **Analysis & Intelligence**: Platform computes spatial raster indices (NDVI, NDRE, NDMI), extracts statistical summaries across field zones, evaluates soil moisture against field capacity, and computes heat unit accumulation.
+4. **Analysis & Intelligence**: Platform computes spatial raster indices (NDVI, NDRE, NDMI), extracts statistical summaries across field zones, evaluates soil moisture dynamics (marking generic thresholds as provisional until calibrated with local soil water retention curves), and computes heat unit accumulation.
 5. **Monitoring & Alerts**: Platform displays the spatial field map, multi-layer analytics, and generates rule-based agronomic alerts (e.g., moisture stress warning, thermal generation threshold reached).
 6. **Reporting**: User exports a structured field health summary report (PDF/JSON/CSV).
 
@@ -100,4 +100,5 @@ AgroViz provides **two complementary operational workflows**:
 - **No Synthetic Risk Scores**: AgroViz does not generate arbitrary "Low / Medium / High" pest risk percentages or unvalidated composite scores without real, overlapping field scouting data.
 - **No Station Conflation**: AgroViz never claims NASA POWER or ERA5-Land gridded reanalysis are local on-farm weather stations or soil capacitance probes.
 - **No Silent Data Invention**: AgroViz never silently interpolates, backfills, or fabricates missing satellite imagery (such as monsoon cloud gaps in July).
+- **No Uncalibrated Moisture Thresholds**: The platform does not present generic soil moisture numbers (e.g. 0.28 or 0.25 m³/m³) as validated agronomic wilting points for local Vertisols without localized retention calibration.
 - **No Fake Field Masks**: When working with the 10 km Akola regional dataset, AgroViz clearly identifies values as "AOI-level aggregates" rather than isolated cotton fields.

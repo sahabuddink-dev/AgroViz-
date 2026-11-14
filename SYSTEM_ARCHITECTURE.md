@@ -90,11 +90,10 @@ The user interface adopts a professional 3-column precision monitoring layout in
 ## 3. Backend Architecture
 
 ### 3.1 Framework & Core Modules
-- **Framework**: FastAPI (asynchronous, type-safe API framework using Python 3.10).
-- **Validation**: Pydantic v2 schemas enforcing strict request/response data contracts.
-- **Scientific Computing**: NumPy, Pandas, and SciPy for numerical array manipulation, statistical filtering, and sinusoidal integration.
-- **Geospatial & Raster Support**: Lightweight GeoTIFF parsing and raster math utilities (supporting standard GDAL/Rasterio/Tifffile schemas for band extraction).
-- **Testing**: Pytest with automated unit and integration tests covering mathematical edge cases, schema validations, and file immutability.
+- **Framework**: FastAPI (asynchronous, type-safe API framework using Python 3.10) with Uvicorn.
+- **Validation**: Pydantic v2 schemas enforcing strict request/response data contracts, with `python-multipart` for file uploads.
+- **Data & Numerical Processing**: NumPy and Pandas for array manipulation, time-series aggregation, and mathematical integration (using Python standard library math and NumPy; external heavy GIS libraries like GDAL/Rasterio/SciPy are not installed in the current environment).
+- **Testing & HTTP**: Pytest with HTTPX TestClient for automated unit and integration tests covering mathematical edge cases, schema validations, and file immutability.
 
 ### 3.2 Service Layer Architecture
 
@@ -212,15 +211,18 @@ AgroViz distinguishes between **Deterministic Scientific Algorithms** (currently
 
 ## 7. Evidence-Based Alert Engine
 
-Alerts in AgroViz are evaluated through deterministic agronomic rules:
+Alerts in AgroViz are evaluated through transparent agronomic indicators and phenological milestones. Soil moisture deficit rules are kept strictly **provisional / illustrative** unless calibrated against local soil water retention curves (e.g. Vertisol field capacity and permanent wilting point for Akola):
 
-| Alert ID | Condition | Severity | Description |
-|---|---|---|---|
-| `ALT-MST-01` | Layer 1 Moisture $< 0.28\text{ m}^3/\text{m}^3$ for $>5$ days | `Warning` | Topsoil Moisture Deficit: Surface root-zone drying. |
-| `ALT-MST-02` | Layer 1 & 2 Moisture $< 0.25\text{ m}^3/\text{m}^3$ | `Critical` | Severe Subsoil Drought Stress: Root-zone depleted. |
-| `ALT-PBW-01` | Cumulative DD $\ge 503.62$ (Set A) | `Info` | Generation 1 Thermal Completion: First PBW generation thermal threshold reached. |
-| `ALT-PBW-02` | Cumulative DD $\ge 1007.24$ (Set A) | `Warning` | Generation 2 Thermal Completion: Second PBW generation heat units accumulated. |
-| `ALT-CLD-01` | Optical observation gap $> 25$ days | `Info` | Persistent Cloud Interference: Optical satellite gap detected (monsoon clouding). |
+| Alert ID | Condition | Severity | Description | Status |
+|---|---|---|---|---|
+| `ALT-MST-01` | Layer 1 Moisture $< 0.28\text{ m}^3/\text{m}^3$ for $>5$ days | `Warning` | Provisional Topsoil Deficit (Illustrative rule; requires local soil water retention calibration) | *Provisional (Disabled by default)* |
+| `ALT-MST-02` | Layer 1 & 2 Moisture $< 0.25\text{ m}^3/\text{m}^3$ | `Critical` | Provisional Subsoil Drought (Illustrative rule; unvalidated against field wilting points) | *Provisional (Disabled by default)* |
+| `ALT-PBW-01` | Cumulative DD $\ge 503.62$ (Set A) | `Info` | Generation 1 Thermal Potential: Literature thermal threshold reached for 1st PBW generation | **Active (Cited Phenology)** |
+| `ALT-PBW-02` | Cumulative DD $\ge 1007.24$ (Set A) | `Warning` | Generation 2 Thermal Potential: Heat units accumulated for 2nd PBW generation | **Active (Cited Phenology)** |
+| `ALT-CLD-01` | Optical observation gap $> 25$ days | `Info` | Persistent Cloud Interference: Optical satellite gap detected (monsoon clouding in July) | **Active (Observed Quality)** |
+
+> [!CAUTION] Soil Moisture Alert Thresholds Notice
+> Generic thresholds such as 0.28 or 0.25 m³/m³ are derived purely from empirical distributions of ERA5-Land reanalysis during dry periods. They are **not** validated agronomic wilting points or field capacity thresholds for Akola's deep Vertisols (black cotton soils). Moisture-based alerts remain flagged as *provisional* and disabled from automated decision triggers until calibrated against physical soil retention data.
 
 Every alert output includes the trigger metric, threshold value, data source, and recommended scouting action.
 

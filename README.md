@@ -20,7 +20,7 @@ It seamlessly integrates satellite remote sensing (Copernicus Sentinel-2), drone
 - **Biophysical Vegetation Indices**: Automated calculation of NDVI (vigor/biomass), NDRE (chlorophyll/nitrogen), and NDMI (canopy moisture) with cloud gap detection.
 - **Multi-Depth Soil Analytics**: Daily root-zone volumetric soil moisture across 3 distinct depths (0–7 cm, 7–28 cm, 28–100 cm) combined with 6-depth SoilGrids physical property profiles and USDA soil texture classification (**Clay**).
 - **Thermal Phenological Indicators**: Single-sine degree-day calculation with horizontal cutoff evaluating Pink Bollworm (*Pectinophora gossypiella*) thermal accumulation and generation turnover using literature parameters (Set A: 503.62 DD; Set B: 492.00 DD).
-- **Evidence-Based Agronomic Alerts**: Deterministic rule engine monitoring topsoil moisture deficits, subsoil drought stress, thermal generation completion, and optical cloud gap duration.
+- **Evidence-Based Agronomic Alerts**: Rule engine monitoring cited insect thermal development milestones and optical cloud gaps (with soil moisture deficit rules marked as provisional pending localized soil retention calibration).
 - **Rigorous Data Provenance**: Every metric in the API and UI carries explicit provenance tags (`measured`, `calculated`, `model_estimated`, `published_literature`, `unavailable`), known limitations, and citations.
 
 ---
@@ -70,6 +70,7 @@ AgroViz includes nine verified, immutable datasets representing the Akola cotton
 3. **No Synthetic Risk Scores**: AgroViz does not fabricate arbitrary "Low/Medium/High" pest infestation percentages. The degree-day output is a *thermal development indicator*, never a confirmed infestation risk.
 4. **Reanalysis vs. Stations**: NASA POWER and ERA5-Land are gridded numerical model reanalyses, not local ground weather stations or in-situ soil probes.
 5. **Monsoon Cloud Gap**: Zero valid optical satellite observations exist in July 2023 and July 2024 due to persistent monsoon clouds. This gap is explicitly shown and never silently interpolated.
+6. **Provisional Soil Moisture Rules**: Generic moisture thresholds (e.g. 0.28 or 0.25 m³/m³) are statistical indicators from reanalysis distributions, not validated agronomic wilting points for Akola Vertisols; they remain flagged as provisional.
 
 ---
 
