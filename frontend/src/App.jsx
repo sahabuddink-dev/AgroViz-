@@ -4,11 +4,12 @@ import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import DatasetManagement from './pages/DatasetManagement';
+import Weather from './pages/Weather';
 import ModulePlaceholder from './pages/ModulePlaceholder';
 import About from './pages/About';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState('datasets');
+  const [activeTab, setActiveTab] = useState('weather');
   const [healthResponse, setHealthResponse] = useState(null);
   const [datasetsResponse, setDatasetsResponse] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -64,6 +65,8 @@ export default function App() {
             </div>
           )}
 
+          {activeTab === 'weather' && <Weather />}
+
           {activeTab === 'datasets' && (
             <DatasetManagement
               registryData={datasetsResponse?.data}
@@ -73,7 +76,7 @@ export default function App() {
 
           {activeTab === 'about' && <About />}
 
-          {['overview', 'weather', 'crop_health', 'soil', 'pbw', 'ai_analysis'].includes(activeTab) && (
+          {['overview', 'crop_health', 'soil', 'pbw', 'ai_analysis'].includes(activeTab) && (
             <ModulePlaceholder
               moduleId={activeTab}
               onInspectDataset={handleInspectDataset}

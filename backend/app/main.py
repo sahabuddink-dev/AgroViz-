@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .config import APP_TITLE, APP_DESCRIPTION, APP_VERSION, ALLOWED_ORIGINS
-from .routers import health, datasets
+from .routers import health, datasets, weather
 
 app = FastAPI(
     title=APP_TITLE,
@@ -21,6 +21,7 @@ app.add_middleware(
 # Include routers
 app.include_router(health.router)
 app.include_router(datasets.router)
+app.include_router(weather.router)
 
 @app.get("/")
 def root():

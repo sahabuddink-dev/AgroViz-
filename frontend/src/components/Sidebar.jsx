@@ -1,9 +1,9 @@
 import React from 'react';
 
 const NAV_ITEMS = [
-  { id: 'datasets', label: 'Dataset Management', icon: '📁', status: 'Phase 3 (Active)', badgeColor: 'green' },
+  { id: 'weather', label: 'Weather Monitoring', icon: '🌦️', status: 'Phase 4 (Active)', badgeColor: 'green' },
+  { id: 'datasets', label: 'Dataset Management', icon: '📁', status: 'Active', badgeColor: 'green' },
   { id: 'overview', label: 'Overview Dashboard', icon: '📊', status: 'Phase 8', badgeColor: 'gray' },
-  { id: 'weather', label: 'Weather Monitoring', icon: '🌦️', status: 'Phase 4', badgeColor: 'gray' },
   { id: 'crop_health', label: 'Crop Health (S2)', icon: '🛰️', status: 'Phase 7', badgeColor: 'gray' },
   { id: 'soil', label: 'Soil Conditions', icon: '🌍', status: 'Phase 6', badgeColor: 'gray' },
   { id: 'pbw', label: 'Pink Bollworm (PBW)', icon: '🐛', status: 'Phase 5', badgeColor: 'gray' },

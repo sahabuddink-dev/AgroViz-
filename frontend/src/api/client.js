@@ -31,3 +31,20 @@ export const getDatasetProfile = async (datasetId) => {
   const response = await apiClient.get(`/api/datasets/${datasetId}/profile`);
   return response.data;
 };
+
+export const getWeather = async (start = null, end = null, limit = null) => {
+  const params = {};
+  if (start) params.start = start;
+  if (end) params.end = end;
+  if (limit) params.limit = limit;
+  const response = await apiClient.get('/api/weather', { params });
+  return response.data;
+};
+
+export const getWeatherSummary = async (start = null, end = null) => {
+  const params = {};
+  if (start) params.start = start;
+  if (end) params.end = end;
+  const response = await apiClient.get('/api/weather/summary', { params });
+  return response.data;
+};
