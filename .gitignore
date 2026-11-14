@@ -1,6 +1,9 @@
-# OS files
+# OS metadata
 .DS_Store
+.DS_Store?
+._*
 Thumbs.db
+ehthumbs.db
 
 # Python
 __pycache__/
@@ -17,17 +20,48 @@ ENV/
 *.egg-info/
 .coverage
 htmlcov/
+.mypy_cache/
+.ruff_cache/
 
 # Node / Frontend
 frontend/node_modules/
 node_modules/
 frontend/dist/
 dist/
+build/
 .npm
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+.eslintcache
 
-# Uploads runtime files except .gitkeep
+# Environment and Secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.cert
+*.pfx
+secrets/
+credentials.json
+
+# Local IDE and Editors
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+*.sublime-project
+*.sublime-workspace
+
+# Runtime Uploads & Scratch (preserve directory structure via .gitkeep)
 data/uploads/*
 !data/uploads/.gitkeep
+data/scratch/*
+!data/scratch/.gitkeep
+
+# Temporary and Log Files
+*.tmp
+*.bak
+*.log

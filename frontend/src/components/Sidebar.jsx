@@ -1,14 +1,10 @@
 import React from 'react';
 
 const NAV_ITEMS = [
-  { id: 'weather', label: 'Weather Monitoring', icon: '🌦️', status: 'Phase 4 (Active)', badgeColor: 'green' },
+  { id: 'weather', label: 'Weather Monitoring', icon: '🌦️', status: 'Live', badgeColor: 'green' },
+  { id: 'pbw', label: 'Pink Bollworm (PBW)', icon: '🐛', status: 'Active', badgeColor: 'green' },
   { id: 'datasets', label: 'Dataset Management', icon: '📁', status: 'Active', badgeColor: 'green' },
-  { id: 'overview', label: 'Overview Dashboard', icon: '📊', status: 'Phase 8', badgeColor: 'gray' },
-  { id: 'crop_health', label: 'Crop Health (S2)', icon: '🛰️', status: 'Phase 7', badgeColor: 'gray' },
-  { id: 'soil', label: 'Soil Conditions', icon: '🌍', status: 'Phase 6', badgeColor: 'gray' },
-  { id: 'pbw', label: 'Pink Bollworm (PBW)', icon: '🐛', status: 'Phase 5 (Active)', badgeColor: 'green' },
-  { id: 'ai_analysis', label: 'AI Analysis', icon: '🧠', status: 'Phase 9', badgeColor: 'gray' },
-  { id: 'about', label: 'About & Citations', icon: 'ℹ️', status: 'Reference', badgeColor: 'blue' },
+  { id: 'about', label: 'Methodology & Sources', icon: 'ℹ️', status: 'Reference', badgeColor: 'blue' },
 ];
 
 export default function Sidebar({ activeTab, setActiveTab }) {
