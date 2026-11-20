@@ -1,500 +1,417 @@
 import React, { useState, useEffect } from 'react';
 import ProvenanceBadge from './ProvenanceBadge';
-import { updateField, deleteField, getAlerts, getReportDownloadUrl } from '../api/client';
+import {
+  predictCropStress,
+  forecastVegetation,
+  getAIPestRisk,
+  getZoneSeries,
+  getReportDownloadUrl,
+} from '../api/client';
 
 export default function FieldInsightsPanel({
   field,
-  onFieldUpdated = () => {},
-  onFieldDeleted = () => {},
+  zone,
   onNavigateTab = () => {},
 }) {
-  const [isEditing, setIsEditing] = useState(false);
-  const [editName, setEditName] = useState('');
-  const [editCrop, setEditCrop] = useState('');
-  const [editSowingDate, setEditSowingDate] = useState('');
-  const [editLocation, setEditLocation] = useState('');
-  const [actionLoading, setActionLoading] = useState(false);
-  const [actionError, setActionError] = useState(null);
+  const selected = zone || field;
+  const isZone = !!(selected?.is_zone || selected?.zone_id);
+  const zoneId = selected?.zone_id || 1;
 
-  // Field Alerts State
-  const [alerts, setAlerts] = useState([]);
-  const [alertsLoading, setAlertsLoading] = useState(false);
+  // AI Inference State
+  const [cnnLoading, setCnnLoading] = useState(false);
+  const [cnnResult, setCnnResult] = useState(null);
 
+  const [lstmLoading, setLstmLoading] = useState(false);
+  const [lstmResult, setLstmResult] = useState(null);
+
+  const [pestLoading, setPestLoading] = useState(false);
+  const [pestResult, setPestResult] = useState(null);
+
+  const [seriesLoading, setSeriesLoading] = useState(false);
+  const [seriesData, setSeriesData] = useState(null);
+
+  // Fetch AI Predictions when zone changes
   useEffect(() => {
-    if (field?.id) {
-      setAlertsLoading(true);
-      getAlerts(field.id)
-        .then((res) => setAlerts(res.data || []))
-        .catch((err) => console.warn('Failed to load field alerts:', err))
-        .finally(() => setAlertsLoading(false));
-    }
-  }, [field?.id]);
+    if (!selected) return;
 
-  if (!field) {
+    if (isZone) {
+      // 1. Fetch CNN Crop Stress
+      setCnnLoading(true);
+      predictCropStress({ zone_id: zoneId })
+        .then((res) => setCnnResult(res.data))
+        .catch((err) => console.warn('CNN inference failed:', err))
+        .finally(() => setCnnLoading(false));
+
+      // 2. Fetch LSTM Forecast
+      setLstmLoading(true);
+      forecastVegetation({ zone_id: zoneId, horizon_days: 15 })
+        .then((res) => setLstmResult(res.data))
+        .catch((err) => console.warn('LSTM forecast failed:', err))
+        .finally(() => setLstmLoading(false));
+
+      // 3. Fetch Pest Risk
+      setPestLoading(true);
+      getAIPestRisk(zoneId)
+        .then((res) => setPestResult(res.data))
+        .catch((err) => console.warn('Pest risk inference failed:', err))
+        .finally(() => setPestLoading(false));
+
+      // 4. Fetch Series counts & details
+      setSeriesLoading(true);
+      getZoneSeries(zoneId)
+        .then((res) => setSeriesData(res.data))
+        .catch((err) => console.warn('Series failed:', err))
+        .finally(() => setSeriesLoading(false));
+    }
+  }, [selected?.id, selected?.zone_id, isZone, zoneId]);
+
+  if (!selected) {
     return (
-      <div className="gis-insights-empty" style={{ padding: '2rem 1.5rem', textAlign: 'center', color: 'var(--text-muted)' }}>
-        <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>🌱</div>
-        <h4>No Field Selected</h4>
-        <p style={{ fontSize: '0.85rem', marginTop: '0.5rem' }}>
-          Select a field from the left panel or click a polygon on the map to inspect its crop health, biophysical conditions, active alerts, and data availability.
+      <div className="gis-insights-empty" style={{ padding: '2.5rem 1.5rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+        <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>🛰️</div>
+        <h4>No Monitoring Zone Selected</h4>
+        <p style={{ fontSize: '0.85rem', marginTop: '0.5rem', lineHeight: 1.5 }}>
+          Select a monitoring zone from the list or click any polygon on the map to inspect its multi-spectral optical/radar fusion, CNN canopy stress classification, and LSTM 15-day forward forecast.
         </p>
       </div>
     );
   }
 
-  const isDemo = field.is_demo || field.field_type === 'research_aoi';
-  const avail = field.data_availability || {};
+  // Formatting helpers
+  const ndvi = selected.ndvi !== undefined ? selected.ndvi : cnnResult?.computed_indices?.NDVI;
+  const bsi = selected.bsi !== undefined ? selected.bsi : cnnResult?.computed_indices?.BSI;
+  const ndre = selected.ndre !== undefined ? selected.ndre : cnnResult?.computed_indices?.NDRE;
+  const ndmi = selected.ndmi !== undefined ? selected.ndmi : cnnResult?.computed_indices?.NDMI;
+  const vh_db = selected.vh_db;
+  const sar_ratio = selected.sar_ratio_db;
 
-  const handleStartEdit = () => {
-    setEditName(field.name || '');
-    setEditCrop(field.crop_type || 'Cotton');
-    setEditSowingDate(field.sowing_date || '');
-    setEditLocation(field.location || '');
-    setActionError(null);
-    setIsEditing(true);
-  };
-
-  const handleSaveEdit = async (e) => {
-    e.preventDefault();
-    try {
-      setActionLoading(true);
-      setActionError(null);
-      const res = await updateField(field.id, {
-        name: editName,
-        crop_type: editCrop,
-        sowing_date: editSowingDate || null,
-        location: editLocation || null,
-      });
-      onFieldUpdated(res.data);
-      setIsEditing(false);
-    } catch (err) {
-      console.error('Update field error:', err);
-      setActionError(err.response?.data?.detail || err.message || 'Failed to update field.');
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const handleDelete = async () => {
-    if (isDemo) return;
-    const confirmed = window.confirm(`Are you sure you want to delete the field "${field.name}"?`);
-    if (!confirmed) return;
-
-    try {
-      setActionLoading(true);
-      setActionError(null);
-      await deleteField(field.id);
-      onFieldDeleted(field.id);
-    } catch (err) {
-      console.error('Delete field error:', err);
-      setActionError(err.response?.data?.detail || err.message || 'Failed to delete field.');
-    } finally {
-      setActionLoading(false);
-    }
-  };
+  const stressClass = cnnResult?.predicted_class || selected.crop_stress || 'Healthy';
+  const stressColor =
+    stressClass === 'Healthy'
+      ? '#16a34a'
+      : stressClass === 'Moderate Stress'
+      ? '#eab308'
+      : stressClass === 'Severe Stress'
+      ? '#dc2626'
+      : '#64748b';
 
   return (
     <div className="gis-insights-container" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', padding: '1rem' }}>
-      {/* Field Overview Card */}
-      <div className="card" style={{ padding: '1.25rem', borderTop: `4px solid ${isDemo ? '#0284c7' : '#10b981'}` }}>
+      {/* 1. Header Card */}
+      <div className="card" style={{ padding: '1.25rem', borderTop: `4px solid ${stressColor}` }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.5rem' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <span style={{ fontSize: '1.1rem' }}>{isDemo ? '🏛️' : '🚜'}</span>
-              <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700 }}>{field.name}</h3>
+              <span style={{ fontSize: '1.25rem' }}>🛰️</span>
+              <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 700 }}>
+                {selected.name || `Monitoring Zone ${zoneId}`}
+              </h3>
             </div>
             <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
-              {field.location || 'Akola District, Maharashtra'}
+              Lat: {selected.latitude?.toFixed(4)}°N • Lon: {selected.longitude?.toFixed(4)}°E
+              {selected.elevation_m ? ` • ${selected.elevation_m}m ASL` : ''}
+              {selected.slope_deg ? ` • Slope ${selected.slope_deg}°` : ''}
             </div>
           </div>
           <div style={{ display: 'flex', gap: '0.35rem' }}>
             <span
-              className={`provenance-tag ${isDemo ? 'tag-model_estimated' : 'tag-measured'}`}
-              style={{ fontSize: '0.7rem' }}
+              style={{
+                fontSize: '0.7rem',
+                fontWeight: 700,
+                padding: '0.15rem 0.5rem',
+                borderRadius: 4,
+                background: stressColor,
+                color: '#ffffff',
+              }}
             >
-              {isDemo ? 'Reference Field' : 'Farm Field'}
+              {stressClass}
             </span>
           </div>
         </div>
 
-        {actionError && (
-          <div style={{ marginTop: '0.75rem', padding: '0.5rem', background: '#fee2e2', color: '#991b1b', borderRadius: 6, fontSize: '0.8rem' }}>
-            {actionError}
-          </div>
-        )}
-
-        {/* Edit Form */}
-        {isEditing ? (
-          <form onSubmit={handleSaveEdit} style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            <div>
-              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600 }}>Field Name</label>
-              <input
-                type="text"
-                className="input-sm"
-                style={{ width: '100%' }}
-                value={editName}
-                onChange={(e) => setEditName(e.target.value)}
-                required
-              />
-            </div>
-            <div className="grid-2" style={{ gap: '0.5rem' }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600 }}>Crop</label>
-                <input
-                  type="text"
-                  className="input-sm"
-                  style={{ width: '100%' }}
-                  value={editCrop}
-                  onChange={(e) => setEditCrop(e.target.value)}
-                />
-              </div>
-              <div>
-                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600 }}>Sowing Date</label>
-                <input
-                  type="date"
-                  className="input-sm"
-                  style={{ width: '100%' }}
-                  value={editSowingDate}
-                  onChange={(e) => setEditSowingDate(e.target.value)}
-                />
-              </div>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '0.25rem' }}>
-              <button type="button" className="btn-secondary btn-sm" onClick={() => setIsEditing(false)}>
-                Cancel
-              </button>
-              <button type="submit" className="btn-primary btn-sm" disabled={actionLoading}>
-                {actionLoading ? 'Saving...' : 'Save Changes'}
-              </button>
-            </div>
-          </form>
-        ) : (
-          <div>
-            {/* Key Field Metrics */}
-            <div className="grid-3" style={{ gap: '0.5rem', marginTop: '1rem' }}>
-              <div style={{ background: '#f8fafc', padding: '0.5rem 0.65rem', borderRadius: 6, border: '1px solid var(--border-color)' }}>
-                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Surface Area</div>
-                <strong style={{ fontSize: '0.9rem', color: 'var(--text-main)' }}>
-                  {field.area_hectares?.toLocaleString()} ha
-                </strong>
-                <div style={{ fontSize: '0.675rem', color: 'var(--text-muted)' }}>
-                  ({field.area_acres?.toLocaleString()} ac)
-                </div>
-              </div>
-
-              <div style={{ background: '#f8fafc', padding: '0.5rem 0.65rem', borderRadius: 6, border: '1px solid var(--border-color)' }}>
-                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Crop Type</div>
-                <strong style={{ fontSize: '0.9rem', color: '#16a34a' }}>
-                  {field.crop_type}
-                </strong>
-                <div style={{ fontSize: '0.675rem', color: 'var(--text-muted)' }}>
-                  {field.sowing_date ? `Sown: ${field.sowing_date}` : 'Date unassigned'}
-                </div>
-              </div>
-
-              <div style={{ background: '#f8fafc', padding: '0.5rem 0.65rem', borderRadius: 6, border: '1px solid var(--border-color)' }}>
-                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Center Centroid</div>
-                <strong style={{ fontSize: '0.75rem', color: '#475569' }}>
-                  {field.centroid?.latitude}°N
-                </strong>
-                <div style={{ fontSize: '0.7rem', color: '#475569' }}>
-                  {field.centroid?.longitude}°E
-                </div>
-              </div>
-            </div>
-
-            {/* Quick Report & Export Toolbar */}
-            <div style={{ marginTop: '0.85rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ display: 'flex', gap: '0.4rem' }}>
-                <a
-                  href={getReportDownloadUrl(field.id, 'csv')}
-                  download={`agroviz_report_${field.id}.csv`}
-                  className="btn-secondary btn-sm"
-                  style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem', padding: '0.25rem 0.5rem' }}
-                  title="Download field report as tabular CSV"
-                >
-                  📥 Export CSV
-                </a>
-                <button
-                  type="button"
-                  className="btn-secondary btn-sm"
-                  style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem' }}
-                  onClick={() => onNavigateTab('reports')}
-                >
-                  📄 View Full Report
-                </button>
-              </div>
-
-              {!isDemo && (
-                <div style={{ display: 'flex', gap: '0.4rem' }}>
-                  <button
-                    type="button"
-                    className="btn-secondary btn-sm"
-                    style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem' }}
-                    onClick={handleStartEdit}
-                  >
-                    ✏️ Edit
-                  </button>
-                  <button
-                    type="button"
-                    className="btn-secondary btn-sm"
-                    style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem', color: '#dc2626' }}
-                    onClick={handleDelete}
-                    disabled={actionLoading}
-                  >
-                    🗑️ Delete
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
+        {/* Observations Summary Badges */}
+        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem', flexWrap: 'wrap' }}>
+          <span style={{ fontSize: '0.7rem', background: '#f1f5f9', color: '#475569', padding: '0.15rem 0.45rem', borderRadius: 4 }}>
+            Optical S2: {selected.latest_s2_date || '2024-12-31'}
+          </span>
+          <span style={{ fontSize: '0.7rem', background: '#f1f5f9', color: '#475569', padding: '0.15rem 0.45rem', borderRadius: 4 }}>
+            Radar S1: {selected.latest_s1_date || '2024-12-28'}
+          </span>
+          {seriesData?.counts && (
+            <span style={{ fontSize: '0.7rem', background: '#e0f2fe', color: '#0369a1', padding: '0.15rem 0.45rem', borderRadius: 4 }}>
+              {seriesData.counts.sentinel2_dates} S2 • {seriesData.counts.sentinel1_dates} S1 SAR dates
+            </span>
+          )}
+        </div>
       </div>
 
-      {/* Active Evidence-Based Agronomic Alerts */}
+      {/* 2. Optical & SAR Fusion Indices Matrix */}
+      <div className="card" style={{ padding: '1.25rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+          <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 600 }}>Multi-Spectral & Radar Fusion</h4>
+          <span className="provenance-tag tag-measured" style={{ fontSize: '0.65rem' }}>Sentinel-2 + S1 SAR</span>
+        </div>
+
+        <div className="grid-2" style={{ gap: '0.6rem' }}>
+          {/* NDVI */}
+          <div style={{ background: '#f8fafc', padding: '0.6rem', borderRadius: 6, border: '1px solid var(--border-color)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>NDVI (Canopy Vigor)</span>
+              <strong style={{ fontSize: '0.85rem', color: '#16a34a' }}>{ndvi !== null && ndvi !== undefined ? ndvi : '—'}</strong>
+            </div>
+            <div style={{ width: '100%', height: 4, background: '#e2e8f0', borderRadius: 2, marginTop: 4, overflow: 'hidden' }}>
+              <div style={{ width: `${Math.max(0, Math.min(100, (ndvi || 0) * 100))}%`, height: '100%', background: '#16a34a' }} />
+            </div>
+          </div>
+
+          {/* NDRE */}
+          <div style={{ background: '#f8fafc', padding: '0.6rem', borderRadius: 6, border: '1px solid var(--border-color)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>NDRE (Chlorophyll)</span>
+              <strong style={{ fontSize: '0.85rem', color: '#0284c7' }}>{ndre !== null && ndre !== undefined ? ndre : '—'}</strong>
+            </div>
+            <div style={{ width: '100%', height: 4, background: '#e2e8f0', borderRadius: 2, marginTop: 4, overflow: 'hidden' }}>
+              <div style={{ width: `${Math.max(0, Math.min(100, (ndre || 0) * 100))}%`, height: '100%', background: '#0284c7' }} />
+            </div>
+          </div>
+
+          {/* NDMI */}
+          <div style={{ background: '#f8fafc', padding: '0.6rem', borderRadius: 6, border: '1px solid var(--border-color)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>NDMI (Canopy Water)</span>
+              <strong style={{ fontSize: '0.85rem', color: '#0891b2' }}>{ndmi !== null && ndmi !== undefined ? ndmi : '—'}</strong>
+            </div>
+            <div style={{ width: '100%', height: 4, background: '#e2e8f0', borderRadius: 2, marginTop: 4, overflow: 'hidden' }}>
+              <div style={{ width: `${Math.max(0, Math.min(100, ((ndmi || 0) + 0.2) * 150))}%`, height: '100%', background: '#0891b2' }} />
+            </div>
+          </div>
+
+          {/* BSI */}
+          <div style={{ background: '#f8fafc', padding: '0.6rem', borderRadius: 6, border: '1px solid var(--border-color)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>BSI (Bare Soil Index)</span>
+              <strong style={{ fontSize: '0.85rem', color: '#d97706' }}>{bsi !== null && bsi !== undefined ? bsi : '—'}</strong>
+            </div>
+            <div style={{ width: '100%', height: 4, background: '#e2e8f0', borderRadius: 2, marginTop: 4, overflow: 'hidden' }}>
+              <div style={{ width: `${Math.max(0, Math.min(100, ((bsi || 0) + 0.3) * 120))}%`, height: '100%', background: '#d97706' }} />
+            </div>
+          </div>
+
+          {/* S1 SAR VH */}
+          <div style={{ background: '#f8fafc', padding: '0.6rem', borderRadius: 6, border: '1px solid var(--border-color)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>SAR VH Backscatter</span>
+              <strong style={{ fontSize: '0.85rem', color: '#4f46e5' }}>{vh_db !== null && vh_db !== undefined ? `${vh_db} dB` : '—'}</strong>
+            </div>
+            <div style={{ fontSize: '0.65rem', color: '#64748b', marginTop: 2 }}>Biomass canopy volume scattering</div>
+          </div>
+
+          {/* SAR Ratio */}
+          <div style={{ background: '#f8fafc', padding: '0.6rem', borderRadius: 6, border: '1px solid var(--border-color)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>SAR VH/VV Cross-Ratio</span>
+              <strong style={{ fontSize: '0.85rem', color: '#4f46e5' }}>{sar_ratio !== null && sar_ratio !== undefined ? `${sar_ratio} dB` : '—'}</strong>
+            </div>
+            <div style={{ fontSize: '0.65rem', color: '#64748b', marginTop: 2 }}>All-weather cloud-penetrating index</div>
+          </div>
+        </div>
+      </div>
+
+      {/* 3. CNN Canopy Stress Inference Card */}
       <div className="card" style={{ padding: '1.25rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-            <span>🔔</span>
-            <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 600 }}>Active Field Alerts ({alerts.length})</h4>
+            <span>🧠</span>
+            <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 600 }}>CNN Crop Stress Inference</h4>
           </div>
-          <button
-            type="button"
-            className="btn-secondary btn-sm"
-            style={{ fontSize: '0.7rem', padding: '0.15rem 0.45rem' }}
-            onClick={() => onNavigateTab('alerts')}
-          >
-            All Alerts Feed &rarr;
-          </button>
+          <span className="provenance-tag tag-model_estimated" style={{ fontSize: '0.65rem' }}>
+            PyTorch CNN v1.2
+          </span>
         </div>
 
-        {alertsLoading ? (
-          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Evaluating field alerts...</div>
-        ) : alerts.length === 0 ? (
-          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>No active alert thresholds triggered.</div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-            {alerts.slice(0, 3).map((a) => {
-              const isWarn = a.severity === 'Warning';
-              const isCrit = a.severity === 'Critical';
-              const borderColor = isCrit ? '#dc2626' : isWarn ? '#f59e0b' : '#0284c7';
-              const bgColor = isCrit ? '#fee2e2' : isWarn ? '#fffbeb' : '#f0f9ff';
-              const textColor = isCrit ? '#991b1b' : isWarn ? '#92400e' : '#0369a1';
+        {cnnLoading ? (
+          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Running 8-band spectral CNN forward pass...</div>
+        ) : cnnResult ? (
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc', padding: '0.6rem 0.75rem', borderRadius: 6, border: '1px solid var(--border-color)' }}>
+              <div>
+                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Predicted Classification</div>
+                <strong style={{ fontSize: '1rem', color: stressColor }}>{cnnResult.predicted_class}</strong>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Confidence</div>
+                <strong style={{ fontSize: '1rem', color: '#0f172a' }}>{Math.round(cnnResult.confidence * 100)}%</strong>
+              </div>
+            </div>
 
-              return (
-                <div
-                  key={a.id}
-                  style={{
-                    borderLeft: `3px solid ${borderColor}`,
-                    background: bgColor,
-                    padding: '0.5rem 0.75rem',
-                    borderRadius: 4,
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <strong style={{ fontSize: '0.8rem', color: textColor }}>{a.title}</strong>
-                    <span
-                      style={{
-                        fontSize: '0.65rem',
-                        fontWeight: 700,
-                        padding: '0.1rem 0.35rem',
-                        borderRadius: 3,
-                        background: borderColor,
-                        color: '#ffffff',
-                      }}
-                    >
-                      {a.severity}
-                    </span>
+            <p style={{ fontSize: '0.75rem', color: '#475569', margin: '0.6rem 0', lineHeight: 1.4 }}>
+              {cnnResult.description}
+            </p>
+
+            {/* Class Probabilities Bar */}
+            <div style={{ marginTop: '0.5rem' }}>
+              <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: 4 }}>Softmax Probabilities:</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                {Object.entries(cnnResult.class_probabilities || {}).map(([cName, pVal]) => (
+                  <div key={cName} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.7rem' }}>
+                    <span style={{ width: 95, color: '#475569' }}>{cName}:</span>
+                    <div style={{ flex: 1, height: 6, background: '#e2e8f0', borderRadius: 3, overflow: 'hidden' }}>
+                      <div
+                        style={{
+                          width: `${Math.round(pVal * 100)}%`,
+                          height: '100%',
+                          background: cName === cnnResult.predicted_class ? stressColor : '#94a3b8',
+                        }}
+                      />
+                    </div>
+                    <span style={{ width: 32, textAlign: 'right', fontWeight: 600 }}>{Math.round(pVal * 100)}%</span>
                   </div>
-                  <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.725rem', color: '#475569', lineHeight: 1.4 }}>
-                    {a.message}
-                  </p>
-                </div>
-              );
-            })}
+                ))}
+              </div>
+            </div>
           </div>
+        ) : (
+          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Inference unavailable.</div>
         )}
       </div>
 
-      {/* Module Data Availability Matrix */}
+      {/* 4. LSTM 15-Day Forward Forecast Card */}
       <div className="card" style={{ padding: '1.25rem' }}>
-        <h4 style={{ margin: '0 0 0.85rem 0', fontSize: '0.95rem', fontWeight: 600 }}>
-          Biophysical Data Availability & Active Pipelines
-        </h4>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-          {/* 1. Crop Health & Satellite Vigor */}
-          <div style={{ border: '1px solid var(--border-color)', borderRadius: 6, padding: '0.75rem', background: '#fafbfc' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <span>🛰️</span>
-                <strong style={{ fontSize: '0.85rem' }}>Crop Health & Canopy Vigor</strong>
-              </div>
-              <span className={`provenance-tag ${avail.crop_indices?.available ? 'tag-calculated' : 'tag-unavailable'}`}>
-                {avail.crop_indices?.available ? 'Available (S2)' : 'Unavailable'}
-              </span>
-            </div>
-
-            {avail.crop_indices?.available ? (
-              <div style={{ marginTop: '0.4rem', fontSize: '0.75rem', color: '#475569' }}>
-                <div>• Source: Copernicus Sentinel-2 L2A (80 valid dates, June 2023–Dec 2024).</div>
-                <div>• Indices: NDVI (Vigor), NDRE (Chlorophyll), NDMI (Canopy Water).</div>
-                <div style={{ color: '#b45309', marginTop: '0.2rem' }}>
-                  * July 2023 & July 2024 monsoon cloud occlusion gaps strictly preserved.
-                </div>
-                <button
-                  type="button"
-                  className="btn-secondary btn-sm"
-                  style={{ marginTop: '0.5rem', width: '100%', fontSize: '0.75rem' }}
-                  onClick={() => onNavigateTab('crop_health')}
-                >
-                  View Sentinel-2 Time-Series & Raster Engine &rarr;
-                </button>
-              </div>
-            ) : (
-              <div style={{ marginTop: '0.4rem', fontSize: '0.75rem', color: '#64748b' }}>
-                <p style={{ margin: 0 }}>
-                  {avail.crop_indices?.reason ||
-                    'Requires multispectral drone orthomosaic or satellite GeoTIFF upload. Regional 10 km unmasked indices are not assigned to private farm parcels.'}
-                </p>
-                <button
-                  type="button"
-                  className="btn-secondary btn-sm"
-                  style={{ marginTop: '0.5rem', width: '100%', fontSize: '0.75rem', color: '#0369a1' }}
-                  onClick={() => onNavigateTab('crop_health')}
-                >
-                  Upload Field GeoTIFF Raster &rarr;
-                </button>
-              </div>
-            )}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            <span>📈</span>
+            <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 600 }}>LSTM 15-Day NDVI Forecast</h4>
           </div>
-
-          {/* 2. Weather & Atmospheric Conditions */}
-          <div style={{ border: '1px solid var(--border-color)', borderRadius: 6, padding: '0.75rem', background: '#fafbfc' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <span>🌦️</span>
-                <strong style={{ fontSize: '0.85rem' }}>Surface Weather & Meteorology</strong>
-              </div>
-              <span className={`provenance-tag ${avail.weather?.available ? 'tag-model_estimated' : 'tag-unavailable'}`}>
-                {avail.weather?.available ? 'Available (Reanalysis)' : 'Unavailable'}
-              </span>
-            </div>
-
-            {avail.weather?.available ? (
-              <div style={{ marginTop: '0.4rem', fontSize: '0.75rem', color: '#475569' }}>
-                <div>• Source: NASA POWER MERRA-2 (580 daily records, June 2023–Dec 2024).</div>
-                <div>• Coverage: Mean/Max/Min Temp, Relative Humidity, Corrected Rainfall.</div>
-                <button
-                  type="button"
-                  className="btn-secondary btn-sm"
-                  style={{ marginTop: '0.5rem', width: '100%', fontSize: '0.75rem' }}
-                  onClick={() => onNavigateTab('weather')}
-                >
-                  View Weather Trends & Monthly Summaries &rarr;
-                </button>
-              </div>
-            ) : (
-              <div style={{ marginTop: '0.4rem', fontSize: '0.75rem', color: '#64748b' }}>
-                <p style={{ margin: 0 }}>
-                  {avail.weather?.reason ||
-                    'Requires local on-farm weather station CSV upload. Regional ~50x60 km grid cell is not attributed to private fields.'}
-                </p>
-              </div>
-            )}
-          </div>
-
-          {/* 3. Soil Moisture & Texture */}
-          <div style={{ border: '1px solid var(--border-color)', borderRadius: 6, padding: '0.75rem', background: '#fafbfc' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <span>🌍</span>
-                <strong style={{ fontSize: '0.85rem' }}>Root-Zone Soil Conditions</strong>
-              </div>
-              <span className={`provenance-tag ${avail.soil_moisture?.available ? 'tag-model_estimated' : 'tag-unavailable'}`}>
-                {avail.soil_moisture?.available ? 'Available (ERA5 + SoilGrids)' : 'Unavailable'}
-              </span>
-            </div>
-
-            {avail.soil_moisture?.available ? (
-              <div style={{ marginTop: '0.4rem', fontSize: '0.75rem', color: '#475569' }}>
-                <div>• Moisture: ERA5-Land 3-depth dynamics (0-7cm, 7-28cm, 28-100cm).</div>
-                <div>• Texture: ISRIC SoilGrids 2.0 depth profile (Clay texture classification).</div>
-                <button
-                  type="button"
-                  className="btn-secondary btn-sm"
-                  style={{ marginTop: '0.5rem', width: '100%', fontSize: '0.75rem' }}
-                  onClick={() => onNavigateTab('soil')}
-                >
-                  View Soil Moisture Curves & Texture Profile &rarr;
-                </button>
-              </div>
-            ) : (
-              <div style={{ marginTop: '0.4rem', fontSize: '0.75rem', color: '#64748b' }}>
-                <p style={{ margin: 0 }}>
-                  {avail.soil_moisture?.reason ||
-                    'Requires in-situ capacitive FDR/TDR soil probe CSV upload. Regional reanalysis is not mapped to private farm plots.'}
-                </p>
-                <button
-                  type="button"
-                  className="btn-secondary btn-sm"
-                  style={{ marginTop: '0.5rem', width: '100%', fontSize: '0.75rem', color: '#0369a1' }}
-                  onClick={() => onNavigateTab('soil')}
-                >
-                  Upload Field Soil Sensor Log &rarr;
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* 4. Pink Bollworm Phenology */}
-          <div style={{ border: '1px solid var(--border-color)', borderRadius: 6, padding: '0.75rem', background: '#fafbfc' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <span>🐛</span>
-                <strong style={{ fontSize: '0.85rem' }}>Pink Bollworm Phenology (PBW)</strong>
-              </div>
-              <span className={`provenance-tag ${avail.pbw_phenology?.available ? 'tag-calculated' : 'tag-unavailable'}`}>
-                {avail.pbw_phenology?.available ? 'Available (Degree-Days)' : 'Unavailable'}
-              </span>
-            </div>
-
-            {avail.pbw_phenology?.available ? (
-              <div style={{ marginTop: '0.4rem', fontSize: '0.75rem', color: '#475569' }}>
-                <div>• Model: Single-sine horizontal cutoff degree-day engine (Sets A & B).</div>
-                <div>• Historical Context: ICAR-CICR Survey Annexures 3 & 4 (regional baseline).</div>
-                <button
-                  type="button"
-                  className="btn-secondary btn-sm"
-                  style={{ marginTop: '0.5rem', width: '100%', fontSize: '0.75rem' }}
-                  onClick={() => onNavigateTab('pbw')}
-                >
-                  Open Degree-Day Phenology Calculator &rarr;
-                </button>
-              </div>
-            ) : (
-              <div style={{ marginTop: '0.4rem', fontSize: '0.75rem', color: '#64748b' }}>
-                <p style={{ margin: 0 }}>
-                  {avail.pbw_phenology?.reason ||
-                    'Requires field temperature series and local pheromone trap scouting logs.'}
-                </p>
-                <button
-                  type="button"
-                  className="btn-secondary btn-sm"
-                  style={{ marginTop: '0.5rem', width: '100%', fontSize: '0.75rem', color: '#0369a1' }}
-                  onClick={() => onNavigateTab('pbw')}
-                >
-                  Upload Scouting Trap Observations &rarr;
-                </button>
-              </div>
-            )}
-          </div>
+          <span className="provenance-tag tag-model_estimated" style={{ fontSize: '0.65rem' }}>
+            Multi-Variate LSTM
+          </span>
         </div>
+
+        {lstmLoading ? (
+          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Computing LSTM 15-day forward trajectory...</div>
+        ) : lstmResult ? (
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem' }}>
+              <div>
+                <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Projected Trajectory: </span>
+                <strong style={{ fontSize: '0.8rem', color: '#0f172a' }}>{lstmResult.trend_assessment}</strong>
+              </div>
+              <div>
+                <span
+                  style={{
+                    fontSize: '0.65rem',
+                    fontWeight: 700,
+                    padding: '0.1rem 0.4rem',
+                    borderRadius: 3,
+                    background: lstmResult.anomaly_detected ? '#fee2e2' : '#dcfce7',
+                    color: lstmResult.anomaly_detected ? '#dc2626' : '#15803d',
+                  }}
+                >
+                  {lstmResult.anomaly_detected ? '⚠️ Anomaly Detected' : '✓ Normal Dynamics'}
+                </span>
+              </div>
+            </div>
+
+            {/* Simple visual preview of 15 forecast steps */}
+            <div style={{ background: '#f8fafc', padding: '0.6rem', borderRadius: 6, border: '1px solid var(--border-color)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: 'var(--text-muted)', marginBottom: 4 }}>
+                <span>Day +1: {lstmResult.forecast_series?.[0]?.predicted_ndvi}</span>
+                <span>Day +8: {lstmResult.forecast_series?.[7]?.predicted_ndvi}</span>
+                <span>Day +15: {lstmResult.forecast_series?.[14]?.predicted_ndvi}</span>
+              </div>
+
+              {/* Sparkline visualization */}
+              <div style={{ display: 'flex', alignItems: 'flex-end', height: 40, gap: 2, padding: '4px 0' }}>
+                {(lstmResult.forecast_series || []).map((pt, idx) => {
+                  const hPct = Math.max(15, Math.min(100, ((pt.predicted_ndvi - 0.2) / 0.6) * 100));
+                  return (
+                    <div
+                      key={idx}
+                      title={`Day +${pt.day_offset} (${pt.date}): NDVI ${pt.predicted_ndvi} [${pt.lower_bound_95} - ${pt.upper_bound_95}]`}
+                      style={{
+                        flex: 1,
+                        height: `${hPct}%`,
+                        background: '#3b82f6',
+                        borderRadius: '2px 2px 0 0',
+                        opacity: 0.6 + (idx / 15) * 0.4,
+                      }}
+                    />
+                  );
+                })}
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.65rem', color: '#64748b', marginTop: 4 }}>
+                <span>Base: {lstmResult.base_date}</span>
+                <span>95% Confidence Interval ±0.035</span>
+              </div>
+            </div>
+
+            {lstmResult.anomaly_reason && (
+              <div style={{ marginTop: '0.5rem', padding: '0.5rem', background: '#fffbeb', borderLeft: '3px solid #f59e0b', fontSize: '0.7rem', color: '#92400e' }}>
+                {lstmResult.anomaly_reason}
+              </div>
+            )}
+          </div>
+        ) : (
+          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Forecast unavailable.</div>
+        )}
       </div>
 
-      {/* Field Status Footnote */}
-      <div style={{ padding: '0.6rem 0.85rem', background: '#f8fafc', border: '1px solid var(--border-color)', borderRadius: 6, fontSize: '0.725rem', color: '#64748b' }}>
-        Field data is evaluated using calibrated agronomic models.
+      {/* 5. Multi-Factor AI Pest Risk Indicator */}
+      <div className="card" style={{ padding: '1.25rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            <span>🐛</span>
+            <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 600 }}>AI Pest Risk Indicator (PBW)</h4>
+          </div>
+          <span className="provenance-tag tag-model_estimated" style={{ fontSize: '0.65rem' }}>
+            Multi-Factor Fusion
+          </span>
+        </div>
+
+        {pestLoading ? (
+          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Evaluating degree-day and canopy anomaly alignment...</div>
+        ) : pestResult ? (
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc', padding: '0.6rem 0.75rem', borderRadius: 6, border: '1px solid var(--border-color)' }}>
+              <div>
+                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Pest Emergence Risk</div>
+                <strong style={{ fontSize: '0.95rem', color: pestResult.risk_level.includes('High') ? '#dc2626' : pestResult.risk_level.includes('Moderate') ? '#d97706' : '#16a34a' }}>
+                  {pestResult.risk_level} (Score: {pestResult.risk_score})
+                </strong>
+              </div>
+              <div style={{ textAlign: 'right', fontSize: '0.7rem', color: '#475569' }}>
+                <div>Accumulated DD: {pestResult.component_factors?.thermal_degree_days_accumulated} °C·d</div>
+                <div>Completed Gen: {pestResult.component_factors?.completed_generations}</div>
+              </div>
+            </div>
+
+            <p style={{ fontSize: '0.725rem', color: '#475569', margin: '0.5rem 0 0 0', lineHeight: 1.4 }}>
+              <strong>Advisory:</strong> {pestResult.recommendation}
+            </p>
+          </div>
+        ) : (
+          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Pest indicator unavailable.</div>
+        )}
+      </div>
+
+      {/* 6. Quick Action Toolbar */}
+      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'space-between' }}>
+        <a
+          href={getReportDownloadUrl(`zone_${zoneId}`, 'csv')}
+          download={`agroviz_diagnostic_zone_${zoneId}.csv`}
+          className="btn-secondary btn-sm"
+          style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.75rem', padding: '0.35rem 0.75rem' }}
+        >
+          📥 Export Zone CSV
+        </a>
+        <button
+          type="button"
+          className="btn-primary btn-sm"
+          style={{ fontSize: '0.75rem', padding: '0.35rem 0.75rem' }}
+          onClick={() => onNavigateTab('reports')}
+        >
+          📄 View Full Zone Dossier &rarr;
+        </button>
       </div>
     </div>
   );

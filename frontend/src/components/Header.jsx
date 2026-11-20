@@ -1,11 +1,16 @@
 import React from 'react';
 
 const MODULE_TITLES = {
-  dashboard: 'Field Monitoring Dashboard',
-  workspace: 'Field Monitoring Dashboard',
-  fields: 'My Agricultural Fields',
-  alerts: 'Field Alerts & Advisory',
-  reports: 'Field Health Reports & Trends',
+  dashboard: '30-Zone GIS Workspace',
+  workspace: '30-Zone GIS Workspace',
+  fields: '30-Zone GIS Workspace',
+  data_input: 'Multi-Modal Data Ingestion Hub',
+  image_processing: 'Spectral & SAR Processing Engine',
+  ai_models: 'AI Model Management Hub',
+  ai_analysis: 'AI Crop & Pest Analysis',
+  alerts: 'Field & Zonal Alerts Feed',
+  reports: 'Field & Zone Diagnostic Reports',
+  datasets: 'Dataset Catalog & Provenance',
   weather: 'Weather Monitoring',
   crop_health: 'Crop Health & Canopy Vigor',
   soil: 'Soil Conditions & Moisture',
@@ -13,7 +18,7 @@ const MODULE_TITLES = {
 };
 
 export default function Header({ activeTab, healthData, error, onNavigateTab }) {
-  const currentTitle = MODULE_TITLES[activeTab] || 'Dashboard';
+  const currentTitle = MODULE_TITLES[activeTab] || 'Monitoring Workspace';
   const isAnalyticView = ['weather', 'soil', 'crop_health', 'pbw'].includes(activeTab);
 
   return (
@@ -26,10 +31,10 @@ export default function Header({ activeTab, healthData, error, onNavigateTab }) 
           <button
             type="button"
             className="btn-secondary btn-sm"
-            onClick={() => onNavigateTab('dashboard')}
+            onClick={() => onNavigateTab('workspace')}
             style={{ marginLeft: '1rem', padding: '0.2rem 0.55rem', fontSize: '0.75rem' }}
           >
-            &larr; Back to Dashboard
+            &larr; Back to Workspace
           </button>
         )}
       </div>

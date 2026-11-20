@@ -1,74 +1,88 @@
 import React, { useEffect, useState } from 'react';
-import { getFields } from '../api/client';
+import { getZones, getFields } from '../api/client';
 import GisMap from '../components/GisMap';
 import FieldInsightsPanel from '../components/FieldInsightsPanel';
 import AddFieldModal from '../components/AddFieldModal';
 
-export default function GISWorkspace({ onNavigateTab, initialMode = 'dashboard' }) {
-  const [fields, setFields] = useState([]);
-  const [selectedFieldId, setSelectedFieldId] = useState('field_akola_research_demo');
+export default function GISWorkspace({ onNavigateTab }) {
+  const [zones, setZones] = useState([]);
+  const [selectedZoneId, setSelectedZoneId] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [filterStress, setFilterStress] = useState('ALL');
+  const [thematicMode, setThematicMode] = useState('stress'); // 'stress' | 'ndvi' | 'radar'
 
-  // Add Field Modal & Map Drawing State
+  // Custom AOI Drawing State
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isDrawing, setIsDrawing] = useState(false);
   const [drawingPoints, setDrawingPoints] = useState([]);
 
-  useEffect(() => {
-    if (initialMode === 'fields') {
-      // Focus on user field creation when entering via My Fields tab
-      // if user already has fields, select the first user field if available
-      if (fields.length > 1) {
-        const firstUser = fields.find((f) => !f.is_demo);
-        if (firstUser) setSelectedFieldId(firstUser.id);
-      }
-    }
-  }, [initialMode]);
-
-  // Fetch all fields on mount
-  const fetchFields = async (autoSelectId = null) => {
+  // Fetch all 30 Zones on mount
+  const fetchZonesData = async () => {
     try {
       setLoading(true);
       setError(null);
-      const res = await getFields();
+      const res = await getZones();
       const list = res.data || [];
-      setFields(list);
-
-      if (autoSelectId) {
-        setSelectedFieldId(autoSelectId);
-      } else if (list.length > 0 && !selectedFieldId) {
-        setSelectedFieldId(list[0].id);
+      setZones(list);
+      if (list.length > 0 && !selectedZoneId) {
+        setSelectedZoneId(list[0].zone_id);
       }
     } catch (err) {
-      console.error('Failed to load fields:', err);
-      setError(err.response?.data?.detail || err.message || 'Failed to load field registry.');
+      console.error('Failed to load zones:', err);
+      setError(err.response?.data?.detail || err.message || 'Failed to load monitoring zones.');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchFields();
+    fetchZonesData();
   }, []);
 
-  const selectedField = fields.find((f) => f.id === selectedFieldId) || fields[0] || null;
+  const selectedZone = zones.find((z) => z.zone_id === selectedZoneId) || zones[0] || null;
 
-  // Filter fields by search
-  const filteredFields = fields.filter((f) => {
+  // Filter zones by search and stress
+  const filteredZones = zones.filter((z) => {
     const q = searchQuery.toLowerCase();
-    return (
-      (f.name && f.name.toLowerCase().includes(q)) ||
-      (f.crop_type && f.crop_type.toLowerCase().includes(q)) ||
-      (f.location && f.location.toLowerCase().includes(q))
-    );
+    const matchesSearch =
+      (z.name && z.name.toLowerCase().includes(q)) ||
+      `zone ${z.zone_id}`.includes(q) ||
+      (z.crop_stress && z.crop_stress.toLowerCase().includes(q));
+
+    if (!matchesSearch) return false;
+
+    if (filterStress === 'ALL') return true;
+    return (z.crop_stress || '').toUpperCase().includes(filterStress);
   });
 
-  const demoFields = filteredFields.filter((f) => f.is_demo || f.field_type === 'research_aoi');
-  const userFields = filteredFields.filter((f) => !f.is_demo && f.field_type !== 'research_aoi');
+  // Map zone objects to GIS polygons format expected by GisMap
+  const mapFieldItems = zones.map((z) => ({
+    id: `zone_${z.zone_id}`,
+    zone_id: z.zone_id,
+    name: z.name,
+    crop_type: 'Cotton / Vidarbha',
+    area_hectares: 78.5,
+    area_acres: 194.0,
+    boundary: z.geometry,
+    centroid: { latitude: z.latitude, longitude: z.longitude },
+    ndvi: z.ndvi,
+    ndre: z.ndre,
+    ndmi: z.ndmi,
+    bsi: z.bsi,
+    vh_db: z.vh_db,
+    sar_ratio_db: z.sar_ratio_db,
+    crop_stress: z.crop_stress,
+    temperature_c: z.temperature_c,
+    soil_moisture_l1: z.soil_moisture_l1,
+    rainfall_latest_mm: z.rainfall_latest_mm,
+    is_zone: true,
+  }));
 
-  // Drawing Handlers
+  const selectedMapItem = mapFieldItems.find((f) => f.zone_id === selectedZoneId) || mapFieldItems[0] || null;
+
+  // Drawing Handlers for custom AOI
   const handleStartDrawing = () => {
     setDrawingPoints([]);
     setIsDrawing(true);
@@ -88,24 +102,6 @@ export default function GISWorkspace({ onNavigateTab, initialMode = 'dashboard' 
     setDrawingPoints([]);
   };
 
-  // Field Created Callback
-  const handleFieldCreated = (newField) => {
-    setDrawingPoints([]);
-    setIsDrawing(false);
-    fetchFields(newField.id);
-  };
-
-  // Field Updated Callback
-  const handleFieldUpdated = (updatedField) => {
-    setFields((prev) => prev.map((f) => (f.id === updatedField.id ? updatedField : f)));
-  };
-
-  // Field Deleted Callback
-  const handleFieldDeleted = (deletedId) => {
-    setFields((prev) => prev.filter((f) => f.id !== deletedId));
-    setSelectedFieldId('field_akola_research_demo');
-  };
-
   return (
     <div className="gis-workspace-root" style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 120px)', minHeight: 650 }}>
       {/* Three-Column Workspace Layout */}
@@ -121,298 +117,223 @@ export default function GISWorkspace({ onNavigateTab, initialMode = 'dashboard' 
           boxShadow: 'var(--shadow-sm)',
         }}
       >
-        {/* =================================================================== */}
-        {/* LEFT COLUMN: Field Directory & Management (300px)                  */}
-        {/* =================================================================== */}
-        <aside
-          className="gis-left-panel"
+        {/* COLUMN 1: 30 Monitoring Zones Navigation List */}
+        <div
+          className="gis-col-fields"
           style={{
-            width: 310,
+            width: 330,
+            minWidth: 300,
             borderRight: '1px solid var(--border-color)',
             display: 'flex',
             flexDirection: 'column',
             background: '#fafbfc',
-            flexShrink: 0,
           }}
         >
-          {/* Panel Header */}
+          {/* Header & Thematic Mode Selector */}
           <div style={{ padding: '0.85rem 1rem', borderBottom: '1px solid var(--border-color)', background: '#ffffff' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <span style={{ fontSize: '1.1rem' }}>🚜</span>
-                <strong style={{ fontSize: '0.95rem' }}>Agricultural Fields</strong>
+                <span style={{ fontSize: '1.1rem' }}>🗺️</span>
+                <strong style={{ fontSize: '0.95rem' }}>Monitoring Zones</strong>
               </div>
-              <button
-                type="button"
-                className="btn-primary btn-sm"
-                style={{ padding: '0.25rem 0.6rem', fontSize: '0.75rem' }}
-                onClick={() => setIsAddModalOpen(true)}
-              >
-                + Add Field
-              </button>
+              <span style={{ fontSize: '0.7rem', background: '#e0f2fe', color: '#0369a1', padding: '0.15rem 0.45rem', borderRadius: 12, fontWeight: 700 }}>
+                {zones.length} Zones
+              </span>
             </div>
 
-            <input
-              type="text"
-              className="search-input"
-              style={{ width: '100%', minWidth: 'unset', fontSize: '0.775rem', padding: '0.35rem 0.6rem' }}
-              placeholder="Search by field name or crop..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
+            {/* Thematic Choropleth Toggle */}
+            <div style={{ marginTop: '0.65rem' }}>
+              <div style={{ fontSize: '0.675rem', color: 'var(--text-muted)', marginBottom: 3, fontWeight: 600 }}>MAP LAYER MODE</div>
+              <div style={{ display: 'flex', gap: '0.25rem' }}>
+                <button
+                  type="button"
+                  className={`btn-sm ${thematicMode === 'stress' ? 'btn-primary' : 'btn-secondary'}`}
+                  style={{ flex: 1, fontSize: '0.675rem', padding: '0.2rem' }}
+                  onClick={() => setThematicMode('stress')}
+                >
+                  🌱 Stress
+                </button>
+                <button
+                  type="button"
+                  className={`btn-sm ${thematicMode === 'ndvi' ? 'btn-primary' : 'btn-secondary'}`}
+                  style={{ flex: 1, fontSize: '0.675rem', padding: '0.2rem' }}
+                  onClick={() => setThematicMode('ndvi')}
+                >
+                  🛰️ NDVI
+                </button>
+                <button
+                  type="button"
+                  className={`btn-sm ${thematicMode === 'radar' ? 'btn-primary' : 'btn-secondary'}`}
+                  style={{ flex: 1, fontSize: '0.675rem', padding: '0.2rem' }}
+                  onClick={() => setThematicMode('radar')}
+                >
+                  📡 Radar
+                </button>
+              </div>
+            </div>
+
+            {/* Search Input */}
+            <div style={{ marginTop: '0.65rem' }}>
+              <input
+                type="text"
+                placeholder="Search Zone ID or Status..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="input-sm"
+                style={{ width: '100%', fontSize: '0.75rem' }}
+              />
+            </div>
+
+            {/* Filter Pills */}
+            <div style={{ display: 'flex', gap: '0.3rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
+              {['ALL', 'HEALTHY', 'MODERATE', 'SEVERE'].map((st) => (
+                <button
+                  key={st}
+                  type="button"
+                  onClick={() => setFilterStress(st)}
+                  style={{
+                    fontSize: '0.65rem',
+                    padding: '0.15rem 0.45rem',
+                    borderRadius: 10,
+                    border: '1px solid var(--border-color)',
+                    background: filterStress === st ? '#0f172a' : '#f1f5f9',
+                    color: filterStress === st ? '#ffffff' : '#475569',
+                    cursor: 'pointer',
+                    fontWeight: 600,
+                  }}
+                >
+                  {st}
+                </button>
+              ))}
+            </div>
           </div>
 
-          {/* Fields List */}
-          <div style={{ flex: 1, overflowY: 'auto', padding: '0.75rem' }}>
-            {loading && fields.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '1.5rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-                <div className="spinner" style={{ margin: '0 auto 0.5rem' }}></div>
-                Loading field directory...
+          {/* Zones Scrollable List */}
+          <div style={{ flex: 1, overflowY: 'auto', padding: '0.5rem' }}>
+            {loading ? (
+              <div style={{ padding: '1.5rem', textAlign: 'center', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                Loading 30 monitoring zones...
               </div>
-            ) : error ? (
-              <div style={{ padding: '0.75rem', background: '#fee2e2', color: '#991b1b', borderRadius: 6, fontSize: '0.8rem' }}>
-                {error}
+            ) : filteredZones.length === 0 ? (
+              <div style={{ padding: '1.5rem', textAlign: 'center', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                No zones match criteria.
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-                {/* 1. Research Baseline Section */}
-                <div>
-                  <div style={{ fontSize: '0.675rem', fontWeight: 700, color: '#64748b', letterSpacing: '0.05em', marginBottom: '0.35rem', paddingLeft: '0.25rem' }}>
-                    REFERENCE FIELD
-                  </div>
-                  {demoFields.map((f) => {
-                    const isSelected = selectedField?.id === f.id;
-                    return (
-                      <div
-                        key={f.id}
-                        onClick={() => setSelectedFieldId(f.id)}
-                        style={{
-                          padding: '0.65rem 0.75rem',
-                          borderRadius: 6,
-                          border: isSelected ? '2px solid #0284c7' : '1px solid var(--border-color)',
-                          background: isSelected ? '#f0f9ff' : '#ffffff',
-                          cursor: 'pointer',
-                          transition: 'all 0.15s ease',
-                          marginBottom: '0.4rem',
-                        }}
-                      >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                          <strong style={{ fontSize: '0.85rem', color: isSelected ? '#0369a1' : 'var(--text-main)' }}>
-                            {f.name}
-                          </strong>
-                          <span className="provenance-tag tag-model_estimated" style={{ fontSize: '0.65rem' }}>
-                            Reference Field
-                          </span>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.35rem', fontSize: '0.75rem', color: '#64748b' }}>
-                          <span>{f.crop_type}</span>
-                          <span>{f.area_hectares?.toLocaleString()} ha</span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                {filteredZones.map((z) => {
+                  const isSelected = z.zone_id === selectedZoneId;
+                  const s = z.crop_stress || 'Healthy';
+                  const sColor =
+                    s === 'Healthy'
+                      ? '#16a34a'
+                      : s === 'Moderate Stress'
+                      ? '#eab308'
+                      : s === 'Severe Stress'
+                      ? '#dc2626'
+                      : '#64748b';
 
-                {/* 2. User Farm Fields Section */}
-                <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem', paddingLeft: '0.25rem' }}>
-                    <span style={{ fontSize: '0.675rem', fontWeight: 700, color: '#64748b', letterSpacing: '0.05em' }}>
-                      MY FARM FIELDS ({userFields.length})
-                    </span>
-                  </div>
-
-                  {userFields.length === 0 ? (
-                    <div style={{ border: '1px dashed var(--border-color)', borderRadius: 6, padding: '1rem', textAlign: 'center', background: '#ffffff', fontSize: '0.775rem', color: '#64748b' }}>
-                      <p style={{ margin: '0 0 0.5rem 0' }}>No custom farm fields registered yet.</p>
-                      <button
-                        type="button"
-                        className="btn-secondary btn-sm"
-                        style={{ fontSize: '0.75rem' }}
-                        onClick={() => setIsAddModalOpen(true)}
-                      >
-                        + Register First Field
-                      </button>
-                    </div>
-                  ) : (
-                    userFields.map((f) => {
-                      const isSelected = selectedField?.id === f.id;
-                      return (
-                        <div
-                          key={f.id}
-                          onClick={() => setSelectedFieldId(f.id)}
+                  return (
+                    <div
+                      key={z.zone_id}
+                      onClick={() => setSelectedZoneId(z.zone_id)}
+                      style={{
+                        padding: '0.6rem 0.75rem',
+                        borderRadius: 6,
+                        border: isSelected ? '2px solid #0284c7' : '1px solid var(--border-color)',
+                        background: isSelected ? '#f0f9ff' : '#ffffff',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                          <span style={{ width: 8, height: 8, borderRadius: '50%', background: sColor }} />
+                          <strong style={{ fontSize: '0.85rem' }}>Zone {z.zone_id}</strong>
+                        </div>
+                        <span
                           style={{
-                            padding: '0.65rem 0.75rem',
-                            borderRadius: 6,
-                            border: isSelected ? '2px solid #16a34a' : '1px solid var(--border-color)',
-                            background: isSelected ? '#f0fdf4' : '#ffffff',
-                            cursor: 'pointer',
-                            transition: 'all 0.15s ease',
-                            marginBottom: '0.4rem',
+                            fontSize: '0.65rem',
+                            fontWeight: 700,
+                            padding: '0.1rem 0.35rem',
+                            borderRadius: 3,
+                            background: isSelected ? '#0284c7' : '#f1f5f9',
+                            color: isSelected ? '#ffffff' : sColor,
                           }}
                         >
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                            <strong style={{ fontSize: '0.85rem', color: isSelected ? '#166534' : 'var(--text-main)' }}>
-                              {f.name}
-                            </strong>
-                            <span className="provenance-tag tag-measured" style={{ fontSize: '0.65rem' }}>
-                              User Field
-                            </span>
-                          </div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.35rem', fontSize: '0.75rem', color: '#64748b' }}>
-                            <span>{f.crop_type}</span>
-                            <span>{f.area_hectares?.toLocaleString()} ha</span>
-                          </div>
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
+                          {s}
+                        </span>
+                      </div>
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.35rem', fontSize: '0.725rem', color: '#475569' }}>
+                        <span>NDVI: <strong>{z.ndvi !== null ? z.ndvi : '—'}</strong></span>
+                        <span>SAR: <strong>{z.vh_db !== null ? `${z.vh_db} dB` : '—'}</strong></span>
+                        <span>Rain: <strong>{z.rainfall_latest_mm || 0}mm</strong></span>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
-        </aside>
 
-        {/* =================================================================== */}
-        {/* CENTER COLUMN: Interactive Leaflet Map (Flexible)                  */}
-        {/* =================================================================== */}
-        <main
-          className="gis-center-panel"
-          style={{
-            flex: 1,
-            position: 'relative',
-            display: 'flex',
-            flexDirection: 'column',
-            overflow: 'hidden',
-          }}
-        >
-          {/* Central GIS Map Toolbar */}
-          <div
-            style={{
-              padding: '0.4rem 0.85rem',
-              background: '#ffffff',
-              borderBottom: '1px solid var(--border-color)',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              fontSize: '0.8rem',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <span style={{ fontWeight: 600, color: '#334155' }}>
-                Spatial Field View: <strong>{selectedField?.name || 'Loading...'}</strong>
-              </span>
-              {selectedField?.is_demo && (
-                <span style={{ fontSize: '0.7rem', color: '#0369a1', background: '#f0f9ff', padding: '0.15rem 0.45rem', borderRadius: 4 }}>
-                  Akola Reference Field
-                </span>
-              )}
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              {/* Field Analytics Quick Links */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                <button
-                  type="button"
-                  className="btn-secondary btn-sm"
-                  style={{ fontSize: '0.725rem', padding: '0.15rem 0.45rem' }}
-                  onClick={() => onNavigateTab('weather')}
-                  title="Open Weather Monitoring"
-                >
-                  🌦️ Weather
-                </button>
-                <button
-                  type="button"
-                  className="btn-secondary btn-sm"
-                  style={{ fontSize: '0.725rem', padding: '0.15rem 0.45rem' }}
-                  onClick={() => onNavigateTab('soil')}
-                  title="Open Soil Conditions"
-                >
-                  🌍 Soil
-                </button>
-                <button
-                  type="button"
-                  className="btn-secondary btn-sm"
-                  style={{ fontSize: '0.725rem', padding: '0.15rem 0.45rem' }}
-                  onClick={() => onNavigateTab('crop_health')}
-                  title="Open Crop Health & Satellite Vigor"
-                >
-                  🛰️ Crop Health
-                </button>
-                <button
-                  type="button"
-                  className="btn-secondary btn-sm"
-                  style={{ fontSize: '0.725rem', padding: '0.15rem 0.45rem' }}
-                  onClick={() => onNavigateTab('pbw')}
-                  title="Open Pest Phenology Calculator"
-                >
-                  🐛 Pest Phenology
-                </button>
-              </div>
-
-              <div style={{ width: 1, height: 16, background: 'var(--border-color)' }}></div>
-
-              {!isDrawing ? (
-                <button
-                  type="button"
-                  className="btn-secondary btn-sm"
-                  style={{ fontSize: '0.75rem', padding: '0.2rem 0.55rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
-                  onClick={handleStartDrawing}
-                >
-                  ✏️ Draw Boundary
-                </button>
-              ) : (
-                <span style={{ color: '#16a34a', fontWeight: 600, fontSize: '0.75rem' }}>
-                  Drawing Active ({drawingPoints.length} vertices)
-                </span>
-              )}
-            </div>
+          {/* Quick AOI Draw Trigger */}
+          <div style={{ padding: '0.65rem 1rem', borderTop: '1px solid var(--border-color)', background: '#ffffff' }}>
+            <button
+              type="button"
+              className="btn-secondary btn-sm"
+              style={{ width: '100%', fontSize: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}
+              onClick={handleStartDrawing}
+            >
+              <span>📐</span>
+              <span>Draw Custom Satellite AOI</span>
+            </button>
           </div>
+        </div>
 
-          {/* Interactive Map Component */}
-          <div style={{ flex: 1, position: 'relative' }}>
-            <GisMap
-              fields={fields}
-              selectedField={selectedField}
-              onSelectField={(f) => setSelectedFieldId(f.id)}
-              isDrawing={isDrawing}
-              drawingPoints={drawingPoints}
-              onAddDrawingPoint={handleAddDrawingPoint}
-              onFinishDrawing={handleFinishDrawing}
-              onCancelDrawing={handleCancelDrawing}
-            />
-          </div>
-        </main>
+        {/* COLUMN 2: Leaflet Interactive GIS Map */}
+        <div className="gis-col-map" style={{ flex: 1, position: 'relative', minWidth: 380, display: 'flex', flexDirection: 'column' }}>
+          <GisMap
+            fields={mapFieldItems}
+            selectedField={selectedMapItem}
+            onSelectField={(item) => setSelectedZoneId(item.zone_id)}
+            isDrawing={isDrawing}
+            drawingPoints={drawingPoints}
+            onAddDrawingPoint={handleAddDrawingPoint}
+            onFinishDrawing={handleFinishDrawing}
+            onCancelDrawing={handleCancelDrawing}
+          />
+        </div>
 
-        {/* =================================================================== */}
-        {/* RIGHT COLUMN: Field Insights & Module Pipelines (380px)            */}
-        {/* =================================================================== */}
-        <aside
-          className="gis-right-panel"
+        {/* COLUMN 3: AI Zone Intelligence Panel */}
+        <div
+          className="gis-col-insights"
           style={{
-            width: 380,
+            width: 390,
+            minWidth: 350,
             borderLeft: '1px solid var(--border-color)',
-            background: '#fafbfc',
             overflowY: 'auto',
-            flexShrink: 0,
+            background: '#ffffff',
           }}
         >
           <FieldInsightsPanel
-            field={selectedField}
-            onFieldUpdated={handleFieldUpdated}
-            onFieldDeleted={handleFieldDeleted}
+            zone={selectedZone}
             onNavigateTab={onNavigateTab}
           />
-        </aside>
+        </div>
       </div>
 
-      {/* Add Field Registration Modal */}
-      <AddFieldModal
-        isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
-        onFieldCreated={handleFieldCreated}
-        drawnCoordinates={drawingPoints}
-        onStartDrawingOnMap={handleStartDrawing}
-      />
+      {/* Add Field / Custom AOI Modal */}
+      {isAddModalOpen && (
+        <AddFieldModal
+          isOpen={isAddModalOpen}
+          onClose={() => setIsAddModalOpen(false)}
+          drawnCoordinates={drawingPoints}
+          onFieldCreated={() => {
+            setIsAddModalOpen(false);
+            fetchZonesData();
+          }}
+        />
+      )}
     </div>
   );
 }

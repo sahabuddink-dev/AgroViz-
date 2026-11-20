@@ -186,3 +186,48 @@ export const exportReport = async (fieldId, format = 'json') => {
 export const getReportDownloadUrl = (fieldId, format = 'csv') => {
   return `${API_BASE_URL}/api/reports/export?field_id=${encodeURIComponent(fieldId)}&format=${format}`;
 };
+
+// 30 Remote Sensing Monitoring Zones (SIH25099)
+export const getZones = async () => {
+  const response = await apiClient.get('/api/zones');
+  return response.data;
+};
+
+export const getZonesGeoJson = async () => {
+  const response = await apiClient.get('/api/zones/geojson');
+  return response.data;
+};
+
+export const getZoneDetail = async (zoneId) => {
+  const response = await apiClient.get(`/api/zones/${zoneId}`);
+  return response.data;
+};
+
+export const getZoneSeries = async (zoneId, start = null, end = null) => {
+  const params = {};
+  if (start) params.start = start;
+  if (end) params.end = end;
+  const response = await apiClient.get(`/api/zones/${zoneId}/series`, { params });
+  return response.data;
+};
+
+// AI & Machine Learning Inference Services (SIH25099)
+export const getAIModels = async () => {
+  const response = await apiClient.get('/api/ai/models');
+  return response.data;
+};
+
+export const predictCropStress = async (payload) => {
+  const response = await apiClient.post('/api/ai/predict/crop-stress', payload);
+  return response.data;
+};
+
+export const forecastVegetation = async (payload) => {
+  const response = await apiClient.post('/api/ai/forecast/indices', payload);
+  return response.data;
+};
+
+export const getAIPestRisk = async (zoneId = 1) => {
+  const response = await apiClient.get('/api/ai/pest-risk', { params: { zone_id: zoneId } });
+  return response.data;
+};

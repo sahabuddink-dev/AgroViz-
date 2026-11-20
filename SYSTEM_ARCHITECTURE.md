@@ -8,15 +8,16 @@ AgroViz is designed as a decoupled, modular full-stack precision agriculture pla
 +---------------------------------------------------------------------------------------+
 |                                    REACT + VITE FRONTEND                              |
 +---------------------------------------------------------------------------------------+
-| Top Navigation:  [Dashboard]      [My Fields]      [Alerts]      [Reports]            |
+| Core Workflows: [GIS Workspace]  [Data Ingestion]  [Spectral Engine]  [AI Models]  [AI Analysis]|
+| Intelligence:   [Alerts Feed]    [Diagnostic Reports]                 [Dataset Catalog]        |
 +--------------------------+------------------------------+-----------------------------+
-| LEFT PANEL (320px)       | CENTER PANEL (Flexible)      | RIGHT PANEL (360px)         |
-| - Field Selector         | - Interactive Leaflet Map    | - Crop Health Status        |
-| - Field Metadata Config  |   * Satellite / Basemap Layer|   * NDVI / NDRE / NDMI      |
-| - Layer Ingestion & Files|   * Field Boundary Polygon   | - Root-Zone Soil Condition  |
-| - Date Range Picker      |   * Spatial Raster Overlays  | - Thermal Pest Phenology    |
-| - Processing Trigger     | - Multi-Layer Timeseries SVG | - Rule-Based Alerts         |
-|                          | - Tabular Record Explorer    | - Evidence & Citations      |
+| LEFT PANEL (330px)       | CENTER PANEL (Flexible)      | RIGHT PANEL (390px)         |
+| - 30 Zones Directory     | - Interactive Leaflet Map    | - AI Zone Intelligence      |
+| - Thematic Layer Toggle  |   * Satellite / Basemap Layer|   * Optical / SAR Fusion    |
+|   (Stress / NDVI / Radar)|   * 30 Zone Polygon Overlays |   * CNN Stress Class & Conf |
+| - Filter by Stress State |   * Thematic Choropleth Fill |   * LSTM 15-Day Trajectory  |
+| - Custom AOI Draw Tool   | - Dynamic Scale & Coordinates|   * Anomaly Flagging        |
+| - Zone Search & Selection| - Coordinate Status Bar      |   * AI Multi-Factor Pest Risk|
 +--------------------------+------------------------------+-----------------------------+
                                        |
                                 HTTP REST / JSON / Multipart
@@ -25,12 +26,15 @@ AgroViz is designed as a decoupled, modular full-stack precision agriculture pla
 |                                  FASTAPI PYTHON BACKEND                               |
 +---------------------------------------------------------------------------------------+
 | ROUTERS:                                                                              |
-| /api/health       /api/fields       /api/weather      /api/imagery    /api/soil       |
-| /api/analysis     /api/pbw          /api/alerts       /api/reports    /api/datasets   |
+| /api/zones        /api/ai           /api/imagery      /api/crop       /api/health     |
+| /api/weather      /api/soil         /api/pbw          /api/alerts     /api/reports    |
+| /api/fields       /api/analysis     /api/datasets                                     |
 +---------------------------------------------------------------------------------------+
-| SERVICES LAYER:                                                                       |
-| - FieldManager: CRUD operations on user fields and preloaded Akola reference field.   |
-| - RasterProcessor: Multispectral band math (NDVI/NDRE/NDMI), GeoTIFF validation.      |
+| SERVICES & ML LAYER:                                                                  |
+| - ZonesService: 30 monitoring zones multi-sensor ingestion (S2, S1 SAR, ERA5, CHIRPS) |
+| - CropStressCNN (PyTorch 2.14): 8-band spectral-spatial CNN for canopy vigor & stress. |
+| - VegetationLSTM (PyTorch 2.14): 2-layer LSTM for 15-day forward NDVI & anomaly detect|
+| - RasterProcessor: Multispectral band math (NDVI/NDRE/NDMI/BSI), GeoTIFF validation.  |
 | - WeatherService: NASA POWER parsing, diurnal temperature trends, precipitation stats.|
 | - SoilService: ERA5-Land 3-depth moisture modeling, SoilGrids physical depth profiles.|
 | - PhenologyService: Single-sine horizontal cutoff degree-day calculations (Sets A/B). |

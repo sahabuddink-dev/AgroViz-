@@ -4,26 +4,36 @@
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![React 18](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black)](https://react.dev)
 [![Vite](https://img.shields.io/badge/Vite-6.0+-646CFF?logo=vite&logoColor=white)](https://vitejs.dev)
-[![Tests](https://img.shields.io/badge/Tests-80%20Passing-brightgreen.svg)]()
-[![Status](https://img.shields.io/badge/Phase%2010-Complete-success.svg)]()
+[![Tests](https://img.shields.io/badge/Tests-90%20Passing-brightgreen.svg)]()
+[![Status](https://img.shields.io/badge/SIH25099-AI%20Crop%20Monitoring-blue.svg)]()
+[![PyTorch](https://img.shields.io/badge/PyTorch-2.14-EE4C2C?logo=pytorch&logoColor=white)](https://pytorch.org)
 [![License](https://img.shields.io/badge/License-Academic%20Research-green.svg)]()
 
-**AgroViz** is an **AI-powered Precision Agriculture Monitoring Platform** designed to evaluate crop health, monitor root-zone soil conditions, track insect thermal development, and generate evidence-based agronomic alerts.
+**AgroViz** is an **AI-powered Crop Health, Soil Condition & Pest Monitoring Platform** developed for **SIH25099**:
+> *"AI-powered monitoring of crop health, soil condition, and pest risks using multispectral/hyperspectral imaging and sensor data."*
 
-It seamlessly integrates satellite remote sensing (Copernicus Sentinel-2), drone multispectral imagery, numerical surface weather reanalysis (NASA POWER), gridded land-surface soil moisture (ECMWF ERA5-Land), global digital soil mapping (ISRIC SoilGrids 2.0), and peer-reviewed entomological phenology models.
+The application integrates multispectral Sentinel-2 imagery (8 bands), all-weather Sentinel-1 SAR radar backscatter ($VH$, $VV$), gridded weather & soil reanalysis (ERA5-Land, CHIRPS), deep PyTorch CNN spectral-spatial feature extractors, multi-variate LSTM temporal trend forecasters, and biological degree-day models across **30 monitoring zones** in the Vidarbha/Akola cotton belt.
 
 ---
 
-## 🌟 Key Platform Capabilities
+## 🌟 5 Core SIH25099 Workflows
 
-- **Dual-Workflow Architecture**:
-  - **Workflow A (Built-in Research Demonstration)**: Preloaded multi-layer monitoring for cotton cultivation in Akola District, Maharashtra, India (10 km AOI buffer around 20.7069°N, 77.0022°E).
-  - **Workflow B (User-Created Precision Fields)**: Define custom field boundaries, input crop stages, and upload multispectral GeoTIFFs, in-situ capacitive soil sensor logs, on-farm weather records, or pest scouting observations.
-- **Biophysical Vegetation Indices**: Automated calculation of NDVI (vigor/biomass), NDRE (chlorophyll/nitrogen), and NDMI (canopy moisture) with cloud gap detection.
-- **Multi-Depth Soil Analytics**: Daily root-zone volumetric soil moisture across 3 distinct depths (0–7 cm, 7–28 cm, 28–100 cm) combined with 6-depth SoilGrids physical property profiles and USDA soil texture classification (**Clay**).
-- **Thermal Phenological Indicators**: Single-sine degree-day calculation with horizontal cutoff evaluating Pink Bollworm (*Pectinophora gossypiella*) thermal accumulation and generation turnover using literature parameters (Set A: 503.62 DD; Set B: 492.00 DD).
-- **Evidence-Based Agronomic Alerts**: Rule engine monitoring cited insect thermal development milestones and optical cloud gaps (with soil moisture deficit rules marked as provisional pending localized soil retention calibration).
-- **Rigorous Data Provenance**: Every metric in the API and UI carries explicit provenance tags (`measured`, `calculated`, `model_estimated`, `published_literature`, `unavailable`), known limitations, and citations.
+1. **Workflow 1: Multi-Modal Data Ingestion Hub** (`/data`):
+   - Continuous ingestion of Sentinel-2 optical surface reflectance (8 bands), Sentinel-1 SAR radar (dual-polarization), ERA5-Land gridded weather/moisture, CHIRPS rainfall, and SoilGrids 2.0 depth profiles across 30 zones.
+   - User GeoTIFF raster upload with automated CRS parsing and in-situ capacitive sensor CSV ingestion.
+2. **Workflow 2: Spectral & SAR Image Processing Engine** (`/imagery`):
+   - Pixel-level vegetation and soil index calculation: **NDVI** (vigor), **NDRE** (chlorophyll), **NDMI** (canopy moisture), **BSI** (Bare Soil Index), and **SAR Cross-Ratio** ($VH/VV$).
+   - Descriptive zonal statistics (mean, median, std, min, max) and 10-bin distribution histograms with division-by-zero protection.
+3. **Workflow 3: AI Model Management Hub** (`/models`):
+   - Full architectural inspection of the **Spatial-Spectral Crop Stress CNN** (8-band Conv1D + BatchNorm + AdaptivePool) and **Multi-Variate Temporal Vegetation LSTM** (2-layer recurrent sequence model).
+   - Parameter counts, layer-by-layer tensor shapes, evaluation benchmarks (Accuracy 91.4%, Macro F1 89.8%, MAE 0.024), and training loss curves.
+4. **Workflow 4: AI Analysis & Multi-Factor Inference** (`/analysis`):
+   - Real-time CNN canopy stress evaluation into 4 calibrated classes (Healthy, Moderate Stress, Severe Stress, Bare Soil).
+   - LSTM 15-day forward NDVI trajectory forecasting with expanding 95% confidence intervals and sudden-drop anomaly detection.
+   - Multi-factor Pink Bollworm pest risk scoring fusing degree-days, LSTM canopy anomaly scores, and rainfall triggers.
+5. **Workflow 5: Spatial Results & 30-Zone GIS Workspace** (`/workspace`):
+   - Three-column interactive Leaflet GIS workspace rendering 30 remote sensing zones with thematic choropleth layers (Crop Stress, NDVI Vigor, Radar Biomass).
+   - AI Zone Intelligence Panel displaying optical/SAR fusion cards, CNN stress classifications, LSTM forecast sparklines, and exportable reports.
 
 ---
 
@@ -33,15 +43,15 @@ AgroViz adopts a professional precision agriculture interface inspired by leadin
 
 ```
 +---------------------------------------------------------------------------------------+
-| Top Navigation:     [Dashboard]      [My Fields]      [Alerts]      [Reports]         |
+| Core Navigation: [GIS Workspace]  [Data Ingestion]  [Spectral Engine]  [AI Models]  [AI Analysis]|
 +--------------------------+------------------------------+-----------------------------+
-| LEFT PANEL               | CENTER PANEL                 | RIGHT PANEL                 |
-| - Field Switcher         | - Interactive Leaflet Map    | - Crop Health Summary       |
-| - Crop Metadata Editor   |   * Satellite Basemap        |   * NDVI / NDRE / NDMI      |
-| - File Upload Dropzone   |   * Field Boundary Polygon   | - Root-Zone Soil Status     |
-|   (GeoTIFF / Sensor CSV) |   * Spatial Raster Overlays  | - Degree-Day Phenology      |
-| - Date Range Picker      | - Multi-Layer Time-Series    | - Active Alert Feed         |
-| - "Run Analysis" Trigger | - Tabular Record Explorer    | - Evidence & Footnotes      |
+| LEFT PANEL (330px)       | CENTER PANEL (Flexible)      | RIGHT PANEL (390px)         |
+| - 30 Zones Directory     | - Interactive Leaflet Map    | - AI Zone Intelligence      |
+| - Thematic Layer Toggle  |   * Satellite / Basemap Layer|   * Optical / SAR Fusion    |
+|   (Stress / NDVI / Radar)|   * 30 Zone Polygon Overlays |   * CNN Stress Class & Conf |
+| - Filter by Stress State |   * Thematic Choropleth Fill |   * LSTM 15-Day Trajectory  |
+| - Custom AOI Draw Tool   | - Dynamic Scale & Coordinates|   * Anomaly Flagging        |
+| - Zone Search & Selection| - Coordinate Status Bar      |   * AI Multi-Factor Pest Risk|
 +--------------------------+------------------------------+-----------------------------+
 ```
 

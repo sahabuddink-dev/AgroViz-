@@ -344,7 +344,7 @@ def compute_raster_indices(
                 f"Raster has {num_bands} bands (valid: 1 to {num_bands})."
             )
 
-    indices_to_compute = [idx.upper() for idx in (selected_indices or ["NDVI", "NDRE", "NDMI"])]
+    indices_to_compute = [idx.upper() for idx in (selected_indices or ["NDVI", "NDRE", "NDMI", "BSI"])]
     results = {}
 
     # Extract band helper
@@ -443,6 +443,45 @@ def compute_raster_indices(
                 "bands_used": {"swir_band": mapping.get("swir"), "nir_band": mapping.get("nir")},
             })
             results["NDMI"] = stats
+
+    # 4. BSI: ((SWIR + Red) - (NIR + Blue)) / ((SWIR + Red) + (NIR + Blue))
+    if "BSI" in indices_to_compute:
+        swir = get_band("swir")
+        red = get_band("red")
+        nir = get_band("nir")
+        blue = get_band("blue")
+
+        if swir is None or red is None or nir is None or blue is None:
+            missing = [b for b, v in [("swir", swir), ("red", red), ("nir", nir), ("blue", blue)] if v is None]
+            results["BSI"] = {
+                "name": "Bare Soil Index (BSI)",
+                "formula": "((SWIR + Red) - (NIR + Blue)) / ((SWIR + Red) + (NIR + Blue))",
+                "status": "unavailable",
+                "reason": f"Missing required band mapping: {', '.join(missing)} must be mapped.",
+            }
+        else:
+            num = (swir + red) - (nir + blue)
+            denom = (swir + red) + (nir + blue)
+            valid_mask = np.isfinite(swir) & np.isfinite(red) & np.isfinite(nir) & np.isfinite(blue) & (np.abs(denom) > 1e-7)
+            if nodata_val is not None:
+                valid_mask &= (swir != nodata_val) & (red != nodata_val) & (nir != nodata_val) & (blue != nodata_val)
+
+            bsi_arr = np.full_like(denom, np.nan, dtype=np.float32)
+            np.divide(num, denom, out=bsi_arr, where=valid_mask)
+            bsi_arr = np.clip(bsi_arr, -1.0, 1.0)
+
+            stats = _calculate_index_stats(bsi_arr, valid_mask)
+            stats.update({
+                "name": "Bare Soil Index (BSI)",
+                "formula": "((SWIR + Red) - (NIR + Blue)) / ((SWIR + Red) + (NIR + Blue))",
+                "bands_used": {
+                    "swir_band": mapping.get("swir"),
+                    "red_band": mapping.get("red"),
+                    "nir_band": mapping.get("nir"),
+                    "blue_band": mapping.get("blue"),
+                },
+            })
+            results["BSI"] = stats
 
     return {
         "upload_id": clean_id,
