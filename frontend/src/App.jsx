@@ -7,6 +7,7 @@ import DatasetManagement from './pages/DatasetManagement';
 import Weather from './pages/Weather';
 import Soil from './pages/Soil';
 import PinkBollworm from './pages/PinkBollworm';
+import CropHealth from './pages/CropHealth';
 import About from './pages/About';
 
 export default function App() {
@@ -69,6 +70,8 @@ export default function App() {
           {activeTab === 'weather' && <Weather />}
 
           {activeTab === 'soil' && <Soil />}
+
+          {activeTab === 'crop_health' && <CropHealth />}
 
           {activeTab === 'pbw' && <PinkBollworm />}
 

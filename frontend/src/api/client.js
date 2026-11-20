@@ -103,3 +103,34 @@ export const uploadSoilSensorLog = async (file) => {
   });
   return response.data;
 };
+
+// Crop Health & Multispectral Raster APIs (Phase 7)
+export const getCropIndices = async (start = null, end = null, limit = null) => {
+  const params = {};
+  if (start) params.start = start;
+  if (end) params.end = end;
+  if (limit) params.limit = limit;
+  const response = await apiClient.get('/api/crop/indices', { params });
+  return response.data;
+};
+
+export const uploadGeoTIFF = async (file) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  const response = await apiClient.post('/api/imagery/upload', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return response.data;
+};
+
+export const computeRasterIndices = async (uploadId, bandMapping, selectedIndices = null) => {
+  const payload = {
+    upload_id: uploadId,
+    band_mapping: bandMapping,
+  };
+  if (selectedIndices) {
+    payload.selected_indices = selectedIndices;
+  }
+  const response = await apiClient.post('/api/imagery/compute-indices', payload);
+  return response.data;
+};
