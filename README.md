@@ -4,6 +4,8 @@
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![React 18](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black)](https://react.dev)
 [![Vite](https://img.shields.io/badge/Vite-6.0+-646CFF?logo=vite&logoColor=white)](https://vitejs.dev)
+[![Tests](https://img.shields.io/badge/Tests-80%20Passing-brightgreen.svg)]()
+[![Status](https://img.shields.io/badge/Phase%2010-Complete-success.svg)]()
 [![License](https://img.shields.io/badge/License-Academic%20Research-green.svg)]()
 
 **AgroViz** is an **AI-powered Precision Agriculture Monitoring Platform** designed to evaluate crop health, monitor root-zone soil conditions, track insect thermal development, and generate evidence-based agronomic alerts.

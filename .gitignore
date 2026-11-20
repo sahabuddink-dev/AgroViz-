@@ -60,6 +60,8 @@ data/uploads/*
 !data/uploads/.gitkeep
 data/scratch/*
 !data/scratch/.gitkeep
+data/fields/*
+!data/fields/.gitkeep
 
 # Temporary and Log Files
 *.tmp
