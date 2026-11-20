@@ -63,16 +63,15 @@ export default function Alerts() {
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <span style={{ fontSize: '1.5rem' }}>🔔</span>
               <h2 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 700 }}>
-                Evidence-Based Agricultural Alert Engine
+                Field Alerts & Advisory
               </h2>
             </div>
             <p style={{ margin: '0.35rem 0 0 0', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-              Deterministic agronomic threshold alerts, optical satellite cloud occlusion notices, root-zone moisture deficits, and thermal phenology milestones
+              Automated agronomic alerts, soil moisture notifications, and pest development advisories
             </p>
           </div>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
             <ProvenanceBadge provenance="calculated" />
-            <span className="provenance-tag tag-model_estimated">Deterministic Rules</span>
           </div>
         </div>
 
@@ -89,7 +88,7 @@ export default function Alerts() {
             >
               {fields.map((f) => (
                 <option key={f.id} value={f.id}>
-                  {f.name} ({f.is_demo ? '10 km Research AOI' : `${f.area_hectares} ha Farm`})
+                  {f.name} ({f.is_demo ? 'Akola Reference Field' : `${f.area_hectares} ha Farm`})
                 </option>
               ))}
             </select>

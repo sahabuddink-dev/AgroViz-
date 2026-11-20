@@ -1,21 +1,20 @@
 import React from 'react';
 
 const MODULE_TITLES = {
-  workspace: 'GIS Field Workspace & Spatial Precision Monitoring',
-  alerts: 'Evidence-Based Agricultural Alert Engine',
-  reports: 'Field Health Reports & YoY Screening Engine',
-  datasets: 'Dataset Management & Provenance Registry',
-  overview: 'Overview Dashboard & Spatial Monitoring',
-  weather: 'Surface Meteorology (NASA POWER MERRA-2)',
-  crop_health: 'Crop Condition & Canopy Moisture (Sentinel-2)',
-  soil: 'Soil Moisture & SoilGrids Physical Properties',
-  pbw: 'Pink Bollworm Thermal Phenology & Context',
-  ai_analysis: 'Descriptive AI Screening & Degree-Day Model',
-  about: 'Project Context, Methodological Caveats & Citations',
+  dashboard: 'Field Monitoring Dashboard',
+  workspace: 'Field Monitoring Dashboard',
+  fields: 'My Agricultural Fields',
+  alerts: 'Field Alerts & Advisory',
+  reports: 'Field Health Reports & Trends',
+  weather: 'Weather Monitoring',
+  crop_health: 'Crop Health & Canopy Vigor',
+  soil: 'Soil Conditions & Moisture',
+  pbw: 'Pest Phenology (Pink Bollworm)',
 };
 
-export default function Header({ activeTab, healthData, error }) {
-  const currentTitle = MODULE_TITLES[activeTab] || 'AgroViz Prototype';
+export default function Header({ activeTab, healthData, error, onNavigateTab }) {
+  const currentTitle = MODULE_TITLES[activeTab] || 'Dashboard';
+  const isAnalyticView = ['weather', 'soil', 'crop_health', 'pbw'].includes(activeTab);
 
   return (
     <header className="app-header">
@@ -23,29 +22,34 @@ export default function Header({ activeTab, healthData, error }) {
         <span className="crumb-root">AgroViz</span>
         <span className="crumb-sep">/</span>
         <span className="crumb-active">{currentTitle}</span>
+        {isAnalyticView && onNavigateTab && (
+          <button
+            type="button"
+            className="btn-secondary btn-sm"
+            onClick={() => onNavigateTab('dashboard')}
+            style={{ marginLeft: '1rem', padding: '0.2rem 0.55rem', fontSize: '0.75rem' }}
+          >
+            &larr; Back to Dashboard
+          </button>
+        )}
       </div>
 
       <div className="header-status-area">
         {healthData ? (
-          <div className="health-indicator status-healthy" title={healthData.notes?.[0] || 'Backend online'}>
+          <div className="health-indicator status-healthy" title="Backend service active">
             <span className="pulse-dot"></span>
-            <span>FastAPI: Healthy ({healthData.data?.datasets_present}/{healthData.data?.datasets_total} Datasets)</span>
+            <span>System Online</span>
           </div>
         ) : error ? (
           <div className="health-indicator status-error" title={error}>
             <span className="error-dot"></span>
-            <span>FastAPI: Offline</span>
+            <span>System Offline</span>
           </div>
         ) : (
           <div className="health-indicator status-neutral">
-            <span>Connecting to backend...</span>
+            <span>Connecting...</span>
           </div>
         )}
-
-        <div className="repo-badge" title="Synced with GitHub">
-          <span className="repo-icon">🐙</span>
-          <span className="repo-text">GitHub: main</span>
-        </div>
       </div>
     </header>
   );

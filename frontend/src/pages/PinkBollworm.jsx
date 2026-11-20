@@ -13,7 +13,7 @@ import {
   Annexure3SeasonalChart,
 } from '../components/PBWCharts';
 
-export default function PinkBollworm() {
+export default function PinkBollworm({ onNavigateTab }) {
   const [activeSection, setActiveSection] = useState('degreedays'); // 'degreedays' | 'context' | 'observed'
   const [startDate, setStartDate] = useState('2023-06-01');
   const [degreeDayData, setDegreeDayData] = useState(null);
@@ -85,6 +85,18 @@ export default function PinkBollworm() {
 
   return (
     <div className="pbw-page-container">
+      {onNavigateTab && (
+        <div style={{ marginBottom: '0.85rem' }}>
+          <button
+            type="button"
+            className="btn-secondary btn-sm"
+            onClick={() => onNavigateTab('dashboard')}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.8rem' }}
+          >
+            &larr; Back to Dashboard
+          </button>
+        </div>
+      )}
       {/* Navigation tabs for the 3 distinct non-overlapping sections */}
       <div className="card" style={{ padding: '0.75rem 1.5rem', marginBottom: '1rem' }}>
         <div className="modal-tabs" style={{ border: 'none', padding: 0 }}>
@@ -202,7 +214,7 @@ export default function PinkBollworm() {
           {/* Mandatory Scientific Notices */}
           <div className="card notice-box" style={{ borderLeftColor: 'var(--accent-amber)', marginBottom: '1.5rem' }}>
             <div style={{ fontWeight: 700, color: '#92400e', marginBottom: '0.4rem' }}>
-              ⚠️ Mandatory Entomological Notices (CLAUDE.md Section 5.10):
+              ℹ️ Degree-Day Phenology Guidance:
             </div>
             <ul style={{ paddingLeft: '1.25rem', fontSize: '0.825rem', lineHeight: '1.6', color: '#78350f' }}>
               <li><strong>Thermal development potential, not an observation of pests:</strong> Heat unit accumulation describes physiological development rate if pests are present, not population density or damage.</li>
@@ -435,10 +447,9 @@ export default function PinkBollworm() {
 
           {/* Data Requirements Card */}
           <div className="card">
-            <h3 className="card-title">Data Requirements to Enable Ground-Truth Validation</h3>
+            <h3 className="card-title">Data Requirements for Localized Risk Calibration</h3>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
-              In accordance with academic rigor (Rule 4), no machine learning model or validated risk score will be generated
-              without ground-truth observations meeting these criteria:
+              Ground-truth field scouting observations are required to enable localized risk forecasting:
             </p>
             <ul className="rules-list">
               {statusData.requirements_to_enable_risk_validation.map((req, idx) => (
@@ -553,7 +564,7 @@ export default function PinkBollworm() {
             )}
 
             <div className="notice-box" style={{ marginTop: '1.25rem' }}>
-              <strong>Isolation Guarantee (Rule 3):</strong> {statusData.isolation_guarantee}
+              <strong>Data Isolation Guarantee:</strong> {statusData.isolation_guarantee}
             </div>
           </div>
         </div>

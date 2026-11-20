@@ -16,7 +16,7 @@ const PRESETS = [
   { label: 'Kharif 2024 (Jun–Oct)', start: '2024-06-01', end: '2024-10-31' },
 ];
 
-export default function Weather() {
+export default function Weather({ onNavigateTab }) {
   const [startDate, setStartDate] = useState('2023-06-01');
   const [endDate, setEndDate] = useState('2024-12-31');
   const [weatherData, setWeatherData] = useState(null);
@@ -71,6 +71,18 @@ export default function Weather() {
 
   return (
     <div className="weather-page-container">
+      {onNavigateTab && (
+        <div style={{ marginBottom: '0.85rem' }}>
+          <button
+            type="button"
+            className="btn-secondary btn-sm"
+            onClick={() => onNavigateTab('dashboard')}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.8rem' }}
+          >
+            &larr; Back to Dashboard
+          </button>
+        </div>
+      )}
       {/* Overview Cards */}
       <div className="metrics-summary-grid">
         {latest && (

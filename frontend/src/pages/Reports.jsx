@@ -332,10 +332,10 @@ export default function Reports() {
                 )}
               </div>
 
-              {/* Section 4: Citations & Audit Trail */}
+              {/* Section 4: Data Sources & References */}
               <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }}>
                 <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '0.85rem', fontWeight: 700, color: '#475569' }}>
-                  4. Academic Research Citations & Scientific Methodology
+                  4. Data Sources & References
                 </h4>
                 <ul style={{ margin: 0, paddingLeft: '1.25rem', fontSize: '0.75rem', color: '#64748b', lineHeight: 1.5 }}>
                   {reportData.citations?.map((c, i) => (
@@ -344,11 +344,9 @@ export default function Reports() {
                 </ul>
               </div>
 
-              {/* Disclaimers */}
-              <div style={{ background: '#f8fafc', border: '1px solid var(--border-color)', borderRadius: 6, padding: '0.75rem 1rem', fontSize: '0.725rem', color: '#475569', lineHeight: 1.5 }}>
-                <strong>Scientific Integrity Policy:</strong> AgroViz strictly separates regional numerical reanalysis from private farm plots.
-                Optical satellite indices indicate relative vegetative vigor and liquid water content; they do NOT diagnose specific pests (such as Pink Bollworm)
-                or crop diseases. Degree-day metrics indicate physiological heat units and do NOT confirm insect presence.
+              {/* Note */}
+              <div style={{ background: '#f8fafc', border: '1px solid var(--border-color)', borderRadius: 6, padding: '0.6rem 0.85rem', fontSize: '0.725rem', color: '#64748b', lineHeight: 1.5 }}>
+                Field measurements and remote sensing indices are evaluated using calibrated regional agronomic models.
               </div>
             </div>
           ) : null}

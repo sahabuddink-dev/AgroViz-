@@ -4,7 +4,7 @@ import GisMap from '../components/GisMap';
 import FieldInsightsPanel from '../components/FieldInsightsPanel';
 import AddFieldModal from '../components/AddFieldModal';
 
-export default function GISWorkspace({ onNavigateTab }) {
+export default function GISWorkspace({ onNavigateTab, initialMode = 'dashboard' }) {
   const [fields, setFields] = useState([]);
   const [selectedFieldId, setSelectedFieldId] = useState('field_akola_research_demo');
   const [loading, setLoading] = useState(true);
@@ -15,6 +15,17 @@ export default function GISWorkspace({ onNavigateTab }) {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isDrawing, setIsDrawing] = useState(false);
   const [drawingPoints, setDrawingPoints] = useState([]);
+
+  useEffect(() => {
+    if (initialMode === 'fields') {
+      // Focus on user field creation when entering via My Fields tab
+      // if user already has fields, select the first user field if available
+      if (fields.length > 1) {
+        const firstUser = fields.find((f) => !f.is_demo);
+        if (firstUser) setSelectedFieldId(firstUser.id);
+      }
+    }
+  }, [initialMode]);
 
   // Fetch all fields on mount
   const fetchFields = async (autoSelectId = null) => {
@@ -167,7 +178,7 @@ export default function GISWorkspace({ onNavigateTab }) {
                 {/* 1. Research Baseline Section */}
                 <div>
                   <div style={{ fontSize: '0.675rem', fontWeight: 700, color: '#64748b', letterSpacing: '0.05em', marginBottom: '0.35rem', paddingLeft: '0.25rem' }}>
-                    RESEARCH BASELINE AOI
+                    REFERENCE FIELD
                   </div>
                   {demoFields.map((f) => {
                     const isSelected = selectedField?.id === f.id;
@@ -190,7 +201,7 @@ export default function GISWorkspace({ onNavigateTab }) {
                             {f.name}
                           </strong>
                           <span className="provenance-tag tag-model_estimated" style={{ fontSize: '0.65rem' }}>
-                            10 km AOI
+                            Reference Field
                           </span>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.35rem', fontSize: '0.75rem', color: '#64748b' }}>
@@ -206,7 +217,7 @@ export default function GISWorkspace({ onNavigateTab }) {
                 <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem', paddingLeft: '0.25rem' }}>
                     <span style={{ fontSize: '0.675rem', fontWeight: 700, color: '#64748b', letterSpacing: '0.05em' }}>
-                      USER FARM FIELDS ({userFields.length})
+                      MY FARM FIELDS ({userFields.length})
                     </span>
                   </div>
 
@@ -292,12 +303,54 @@ export default function GISWorkspace({ onNavigateTab }) {
               </span>
               {selectedField?.is_demo && (
                 <span style={{ fontSize: '0.7rem', color: '#0369a1', background: '#f0f9ff', padding: '0.15rem 0.45rem', borderRadius: 4 }}>
-                  10 km Radius Circle (20.7069°N, 77.0022°E)
+                  Akola Reference Field
                 </span>
               )}
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              {/* Field Analytics Quick Links */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                <button
+                  type="button"
+                  className="btn-secondary btn-sm"
+                  style={{ fontSize: '0.725rem', padding: '0.15rem 0.45rem' }}
+                  onClick={() => onNavigateTab('weather')}
+                  title="Open Weather Monitoring"
+                >
+                  🌦️ Weather
+                </button>
+                <button
+                  type="button"
+                  className="btn-secondary btn-sm"
+                  style={{ fontSize: '0.725rem', padding: '0.15rem 0.45rem' }}
+                  onClick={() => onNavigateTab('soil')}
+                  title="Open Soil Conditions"
+                >
+                  🌍 Soil
+                </button>
+                <button
+                  type="button"
+                  className="btn-secondary btn-sm"
+                  style={{ fontSize: '0.725rem', padding: '0.15rem 0.45rem' }}
+                  onClick={() => onNavigateTab('crop_health')}
+                  title="Open Crop Health & Satellite Vigor"
+                >
+                  🛰️ Crop Health
+                </button>
+                <button
+                  type="button"
+                  className="btn-secondary btn-sm"
+                  style={{ fontSize: '0.725rem', padding: '0.15rem 0.45rem' }}
+                  onClick={() => onNavigateTab('pbw')}
+                  title="Open Pest Phenology Calculator"
+                >
+                  🐛 Pest Phenology
+                </button>
+              </div>
+
+              <div style={{ width: 1, height: 16, background: 'var(--border-color)' }}></div>
+
               {!isDrawing ? (
                 <button
                   type="button"
@@ -305,7 +358,7 @@ export default function GISWorkspace({ onNavigateTab }) {
                   style={{ fontSize: '0.75rem', padding: '0.2rem 0.55rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
                   onClick={handleStartDrawing}
                 >
-                  ✏️ Draw New Boundary
+                  ✏️ Draw Boundary
                 </button>
               ) : (
                 <span style={{ color: '#16a34a', fontWeight: 600, fontSize: '0.75rem' }}>

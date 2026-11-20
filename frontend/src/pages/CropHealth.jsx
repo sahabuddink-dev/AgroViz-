@@ -10,7 +10,7 @@ import {
   RasterIndexDistributionChart,
 } from '../components/CropCharts';
 
-export default function CropHealth() {
+export default function CropHealth({ onNavigateTab }) {
   const [activeTab, setActiveTab] = useState('sentinel2'); // 'sentinel2' | 'raster_engine'
 
   // Sentinel-2 State
@@ -176,6 +176,18 @@ export default function CropHealth() {
 
   return (
     <div className="crop-page">
+      {onNavigateTab && (
+        <div style={{ marginBottom: '0.85rem' }}>
+          <button
+            type="button"
+            className="btn-secondary btn-sm"
+            onClick={() => onNavigateTab('dashboard')}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.8rem' }}
+          >
+            &larr; Back to Dashboard
+          </button>
+        </div>
+      )}
       {/* Top Module Header */}
       <div className="module-header card" style={{ marginBottom: '1.25rem' }}>
         <div className="header-badge-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>

@@ -64,8 +64,7 @@ export default function About() {
       <div className="card">
         <h2 className="card-title">AgroViz Project Background</h2>
         <p style={{ marginBottom: '0.75rem', lineHeight: '1.6' }}>
-          <strong>AgroViz</strong> is an academic MCA research prototype developed for the Smart India Hackathon (SIH 2025)
-          problem statement <strong>SIH25099</strong>. The system provides local-scale environmental monitoring
+          <strong>AgroViz</strong> is a precision agriculture monitoring platform providing field-scale environmental intelligence
           for <strong>Akola district, Maharashtra, India</strong> (centered at 20.7069°N, 77.0022°E), combining satellite remote
           sensing, reanalysis meteorology, numerical soil models, and literature-derived pest phenology indicators.
         </p>

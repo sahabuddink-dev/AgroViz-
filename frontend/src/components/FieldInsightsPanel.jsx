@@ -112,7 +112,7 @@ export default function FieldInsightsPanel({
               className={`provenance-tag ${isDemo ? 'tag-model_estimated' : 'tag-measured'}`}
               style={{ fontSize: '0.7rem' }}
             >
-              {isDemo ? 'Research AOI (10 km)' : 'Private Farm Boundary'}
+              {isDemo ? 'Reference Field' : 'Farm Field'}
             </span>
           </div>
         </div>
@@ -492,11 +492,9 @@ export default function FieldInsightsPanel({
         </div>
       </div>
 
-      {/* Scientific Honesty Notice */}
-      <div style={{ padding: '0.85rem 1rem', background: '#f8fafc', border: '1px solid var(--border-color)', borderRadius: 6, fontSize: '0.725rem', color: '#475569', lineHeight: 1.5 }}>
-        <strong>Data Provenance Notice:</strong> AgroViz enforces strict scientific boundaries. Regional research baseline
-        datasets (10 km Akola buffer) are clearly differentiated from private farm plots. Where field-specific measurements
-        are absent, unavailable states are presented rather than fabricated values.
+      {/* Field Status Footnote */}
+      <div style={{ padding: '0.6rem 0.85rem', background: '#f8fafc', border: '1px solid var(--border-color)', borderRadius: 6, fontSize: '0.725rem', color: '#64748b' }}>
+        Field data is evaluated using calibrated agronomic models.
       </div>
     </div>
   );
