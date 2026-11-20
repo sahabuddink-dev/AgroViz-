@@ -160,3 +160,29 @@ export const deleteField = async (fieldId) => {
   const response = await apiClient.delete(`/api/fields/${fieldId}`);
   return response.data;
 };
+
+// Phase 9: Alerts, YoY Comparative Screening, and Field Reports
+export const getAlerts = async (fieldId = null) => {
+  const params = {};
+  if (fieldId) params.field_id = fieldId;
+  const response = await apiClient.get('/api/alerts', { params });
+  return response.data;
+};
+
+export const getYoyAnalysis = async (metric = 'all') => {
+  const params = { metric };
+  const response = await apiClient.get('/api/analysis/yoy', { params });
+  return response.data;
+};
+
+export const exportReport = async (fieldId, format = 'json') => {
+  const response = await apiClient.post('/api/reports/export', {
+    field_id: fieldId,
+    format,
+  });
+  return response.data;
+};
+
+export const getReportDownloadUrl = (fieldId, format = 'csv') => {
+  return `${API_BASE_URL}/api/reports/export?field_id=${encodeURIComponent(fieldId)}&format=${format}`;
+};

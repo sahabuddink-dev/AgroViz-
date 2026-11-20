@@ -27,7 +27,7 @@ This document defines the operating rules, verification checklists, and phase-by
 - [x] **Phase 6**: Soil Conditions Module (ERA5 3-layer moisture, SoilGrids profile, in-situ sensor upload slot) *(Completed)*.
 - [x] **Phase 7**: Crop Health & Multispectral Raster Engine (Sentinel-2 index series, GeoTIFF validation, band math) *(Completed)*.
 - [x] **Phase 8**: Spatial Field Management & 3-Column Interactive GIS Workspace (Leaflet map, field creation, layer overlays) *(Completed)*.
-- [ ] **Phase 9**: AI Analysis, Evidence-Based Alert Engine & Field Health Reporting (Agronomic rules, YoY screening, locked risk, report export).
+- [x] **Phase 9**: AI Analysis, Evidence-Based Alert Engine & Field Health Reporting (Agronomic rules, YoY screening, locked risk, report export) *(Completed)*.
 - [ ] **Phase 10**: Comprehensive Verification, Full Test Suite, UI Polish & Final Delivery.
 
 ---
@@ -81,10 +81,10 @@ Stop after Phase N and wait for my review and confirmation.
 - [ ] Leaflet map renders field boundaries, satellite base layer, raster overlays, and observation markers.
 
 ### Phase 9 (AI Analysis & Evidence-Based Alert Engine) Checklist
-- [ ] Deterministic agronomic rules evaluate topsoil moisture deficits, thermal milestones, and cloud gaps.
-- [ ] Alerts feed categorizes notices by severity (`Info`, `Warning`, `Critical`) with actionable rationale.
-- [ ] `/api/analysis/pbw-risk` remains strictly locked with `status: "unavailable"` and explicit data requirements.
-- [ ] Field health summary report exports to structured JSON/CSV.
+- [x] Deterministic agronomic rules evaluate topsoil moisture deficits, thermal milestones, and cloud gaps.
+- [x] Alerts feed categorizes notices by severity (`Info`, `Warning`, `Critical`) with actionable rationale.
+- [x] `/api/analysis/pbw-risk` remains strictly locked with `status: "unavailable"` and explicit data requirements.
+- [x] Field health summary report exports to structured JSON/CSV.
 
 ### Phase 10 (Final Verification & Delivery) Checklist
 - [ ] All automated backend tests pass ($>40$ tests).

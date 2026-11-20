@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ProvenanceBadge from './ProvenanceBadge';
-import { updateField, deleteField } from '../api/client';
+import { updateField, deleteField, getAlerts, getReportDownloadUrl } from '../api/client';
 
 export default function FieldInsightsPanel({
   field,
@@ -16,13 +16,27 @@ export default function FieldInsightsPanel({
   const [actionLoading, setActionLoading] = useState(false);
   const [actionError, setActionError] = useState(null);
 
+  // Field Alerts State
+  const [alerts, setAlerts] = useState([]);
+  const [alertsLoading, setAlertsLoading] = useState(false);
+
+  useEffect(() => {
+    if (field?.id) {
+      setAlertsLoading(true);
+      getAlerts(field.id)
+        .then((res) => setAlerts(res.data || []))
+        .catch((err) => console.warn('Failed to load field alerts:', err))
+        .finally(() => setAlertsLoading(false));
+    }
+  }, [field?.id]);
+
   if (!field) {
     return (
       <div className="gis-insights-empty" style={{ padding: '2rem 1.5rem', textAlign: 'center', color: 'var(--text-muted)' }}>
         <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>🌱</div>
         <h4>No Field Selected</h4>
         <p style={{ fontSize: '0.85rem', marginTop: '0.5rem' }}>
-          Select a field from the left panel or click a polygon on the map to inspect its crop health, biophysical conditions, and data availability.
+          Select a field from the left panel or click a polygon on the map to inspect its crop health, biophysical conditions, active alerts, and data availability.
         </p>
       </div>
     );
@@ -189,28 +203,115 @@ export default function FieldInsightsPanel({
               </div>
             </div>
 
-            {/* User Field Action Buttons */}
-            {!isDemo && (
-              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.85rem', justifyContent: 'flex-end' }}>
+            {/* Quick Report & Export Toolbar */}
+            <div style={{ marginTop: '0.85rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', gap: '0.4rem' }}>
+                <a
+                  href={getReportDownloadUrl(field.id, 'csv')}
+                  download={`agroviz_report_${field.id}.csv`}
+                  className="btn-secondary btn-sm"
+                  style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.75rem', padding: '0.25rem 0.5rem' }}
+                  title="Download field report as tabular CSV"
+                >
+                  📥 Export CSV
+                </a>
                 <button
                   type="button"
                   className="btn-secondary btn-sm"
-                  style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem' }}
-                  onClick={handleStartEdit}
+                  style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem' }}
+                  onClick={() => onNavigateTab('reports')}
                 >
-                  ✏️ Edit Field
-                </button>
-                <button
-                  type="button"
-                  className="btn-secondary btn-sm"
-                  style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem', color: '#dc2626' }}
-                  onClick={handleDelete}
-                  disabled={actionLoading}
-                >
-                  🗑️ Delete
+                  📄 View Full Report
                 </button>
               </div>
-            )}
+
+              {!isDemo && (
+                <div style={{ display: 'flex', gap: '0.4rem' }}>
+                  <button
+                    type="button"
+                    className="btn-secondary btn-sm"
+                    style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem' }}
+                    onClick={handleStartEdit}
+                  >
+                    ✏️ Edit
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-secondary btn-sm"
+                    style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem', color: '#dc2626' }}
+                    onClick={handleDelete}
+                    disabled={actionLoading}
+                  >
+                    🗑️ Delete
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Active Evidence-Based Agronomic Alerts */}
+      <div className="card" style={{ padding: '1.25rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            <span>🔔</span>
+            <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 600 }}>Active Field Alerts ({alerts.length})</h4>
+          </div>
+          <button
+            type="button"
+            className="btn-secondary btn-sm"
+            style={{ fontSize: '0.7rem', padding: '0.15rem 0.45rem' }}
+            onClick={() => onNavigateTab('alerts')}
+          >
+            All Alerts Feed &rarr;
+          </button>
+        </div>
+
+        {alertsLoading ? (
+          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Evaluating field alerts...</div>
+        ) : alerts.length === 0 ? (
+          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>No active alert thresholds triggered.</div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+            {alerts.slice(0, 3).map((a) => {
+              const isWarn = a.severity === 'Warning';
+              const isCrit = a.severity === 'Critical';
+              const borderColor = isCrit ? '#dc2626' : isWarn ? '#f59e0b' : '#0284c7';
+              const bgColor = isCrit ? '#fee2e2' : isWarn ? '#fffbeb' : '#f0f9ff';
+              const textColor = isCrit ? '#991b1b' : isWarn ? '#92400e' : '#0369a1';
+
+              return (
+                <div
+                  key={a.id}
+                  style={{
+                    borderLeft: `3px solid ${borderColor}`,
+                    background: bgColor,
+                    padding: '0.5rem 0.75rem',
+                    borderRadius: 4,
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <strong style={{ fontSize: '0.8rem', color: textColor }}>{a.title}</strong>
+                    <span
+                      style={{
+                        fontSize: '0.65rem',
+                        fontWeight: 700,
+                        padding: '0.1rem 0.35rem',
+                        borderRadius: 3,
+                        background: borderColor,
+                        color: '#ffffff',
+                      }}
+                    >
+                      {a.severity}
+                    </span>
+                  </div>
+                  <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.725rem', color: '#475569', lineHeight: 1.4 }}>
+                    {a.message}
+                  </p>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

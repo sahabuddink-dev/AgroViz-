@@ -96,3 +96,35 @@ def get_validated_pbw_risk() -> BaseResponse[Dict[str, Any]]:
             "risk_category": "unavailable",
         },
     )
+
+
+@router.get("/yoy", response_model=BaseResponse[Dict[str, Any]])
+def get_yoy_analysis(
+    metric: Optional[str] = Query(
+        default="all",
+        description="Metric category: 'all', 'weather', 'soil', or 'crop_indices'",
+    )
+):
+    """
+    Descriptive Year-on-Year screening for the common June–December calendar period (2023 vs 2024).
+    Compares observed surface meteorology, 3-layer soil moisture, and Sentinel-2 indices.
+    Strictly documents that 2023 begins on 2023-06-01 (no backfilling of Jan–May).
+    """
+    from app.services.yoy import compute_yoy_analysis
+
+    norm_metric = (metric or "all").lower()
+    if norm_metric not in ["all", "weather", "soil", "crop_indices"]:
+        raise HTTPException(
+            status_code=400,
+            detail="metric must be one of: 'all', 'weather', 'soil', 'crop_indices'.",
+        )
+
+    data = compute_yoy_analysis(metric_category=norm_metric)
+    return BaseResponse(
+        provenance="calculated",
+        source="AgroViz Comparative Screening Engine (NASA POWER, ERA5-Land, Sentinel-2)",
+        units="various",
+        period="June–December 2023 vs June–December 2024",
+        notes=data.get("notes", []),
+        data=data,
+    )

@@ -21,8 +21,8 @@ To maintain scientific continuity, backward compatibility, and rigorous test cov
 +--------+-------------------------------------------------------------+----------------+
 | 7      | Crop Health & Multispectral Engine (S2, GeoTIFF, band math) | COMPLETED (v1) |
 | 8      | Spatial Field Management & 3-Column Interactive GIS Layout  | COMPLETED (v1) |
-| 9      | AI Analysis, Evidence-Based Alert Engine & Report Generator | PENDING (Next) |
-| 10     | Comprehensive Verification, Full Test Suite & Final Delivery| PENDING        |
+| 9      | AI Analysis, Evidence-Based Alert Engine & Report Generator | COMPLETED (v1) |
+| 10     | Comprehensive Verification, Full Test Suite & Final Delivery| PENDING (Next) |
 +--------+-------------------------------------------------------------+----------------+
 ```
 
@@ -42,6 +42,7 @@ To maintain scientific continuity, backward compatibility, and rigorous test cov
 - **Phase 6 (Soil Conditions Module)**: Implemented ECMWF ERA5-Land 3-layer soil moisture APIs and ISRIC SoilGrids 2.0 depth profiles, capacitive soil sensor staging slot with safe moisture normalization, and 3-depth moisture visualization.
 - **Phase 7 (Crop Health & Multispectral Engine)**: Implemented cleaned Sentinel-2 daily vegetation indices (`/api/crop/indices`, 80 dates) with explicit July monsoon cloud gap markers; built GeoTIFF raster ingestion pipeline (`/api/imagery/upload`) with GeoKey CRS and dimension validation; built multispectral raster index engine (`/api/imagery/compute-indices`) computing NDVI, NDRE, NDMI with zero-denominator & NoData masking, zonal statistics, and 10-bin histograms; added interactive frontend time series, date presets, and upload dropzone.
 - **Phase 8 (Spatial Field Management & 3-Column GIS Workspace)**: Implemented backend field CRUD endpoints (`/api/fields`) with flat-file JSON persistence in `data/fields/fields.json`, built-in Akola Research Demo (10 km circular AOI buffer, 31,365 ha), WGS84 geodesic spherical excess area calculation, strict GeoJSON polygon validation; built 3-column precision agriculture workspace with Leaflet GIS map (OSM/Satellite basemaps, polygon boundary overlays, map click drawing), left field directory with search, and right panel with module data availability matrix and deep-dive links.
+- **Phase 9 (AI Analysis, Alert Engine & Field Health Reporting)**: Implemented deterministic agricultural alert engine (`/api/alerts`) evaluating optical cloud gaps, provisional topsoil moisture deficits, single-sine degree-day thermal milestones, and summer heatwaves with dual-workflow support (built-in baseline vs user field onboarding alerts); built Year-on-Year descriptive screening endpoint (`/api/analysis/yoy`) strictly evaluating the common calendar period (June–Dec 2023 vs 2024); built field health report generator (`/api/reports/export`) providing structured JSON and downloadable CSV with literature citations; preserved locked `/api/analysis/pbw-risk` (`status: "unavailable"`); built dedicated frontend `Alerts.jsx` and `Reports.jsx` pages with GIS workspace integration; added 9 automated unit/integration tests (72 total passing).
 
 ---
 

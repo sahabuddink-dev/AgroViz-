@@ -9,6 +9,8 @@ import Soil from './pages/Soil';
 import PinkBollworm from './pages/PinkBollworm';
 import CropHealth from './pages/CropHealth';
 import GISWorkspace from './pages/GISWorkspace';
+import Alerts from './pages/Alerts';
+import Reports from './pages/Reports';
 import About from './pages/About';
 
 export default function App() {
@@ -69,6 +71,10 @@ export default function App() {
           )}
 
           {activeTab === 'workspace' && <GISWorkspace onNavigateTab={setActiveTab} />}
+
+          {activeTab === 'alerts' && <Alerts />}
+
+          {activeTab === 'reports' && <Reports />}
 
           {activeTab === 'weather' && <Weather />}
 
