@@ -7,6 +7,7 @@ DATA_DIR = BASE_DIR / "data"
 DATA_RAW_DIR = DATA_DIR / "raw"
 DATA_PROCESSED_DIR = DATA_DIR / "processed"
 DATA_UPLOADS_DIR = DATA_DIR / "uploads"
+DATA_FIELDS_DIR = DATA_DIR / "fields"
 
 # API settings
 APP_TITLE = "AgroViz API"

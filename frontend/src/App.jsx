@@ -8,10 +8,11 @@ import Weather from './pages/Weather';
 import Soil from './pages/Soil';
 import PinkBollworm from './pages/PinkBollworm';
 import CropHealth from './pages/CropHealth';
+import GISWorkspace from './pages/GISWorkspace';
 import About from './pages/About';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState('weather');
+  const [activeTab, setActiveTab] = useState('workspace');
   const [healthResponse, setHealthResponse] = useState(null);
   const [datasetsResponse, setDatasetsResponse] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -66,6 +67,8 @@ export default function App() {
               </div>
             </div>
           )}
+
+          {activeTab === 'workspace' && <GISWorkspace onNavigateTab={setActiveTab} />}
 
           {activeTab === 'weather' && <Weather />}
 

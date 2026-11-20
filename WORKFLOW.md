@@ -26,7 +26,7 @@ This document defines the operating rules, verification checklists, and phase-by
 - [x] **Phase 5**: Pink Bollworm Module (Degree-day calculator, historical context, CSV template/upload) *(Completed)*.
 - [x] **Phase 6**: Soil Conditions Module (ERA5 3-layer moisture, SoilGrids profile, in-situ sensor upload slot) *(Completed)*.
 - [x] **Phase 7**: Crop Health & Multispectral Raster Engine (Sentinel-2 index series, GeoTIFF validation, band math) *(Completed)*.
-- [ ] **Phase 8**: Spatial Field Management & 3-Column Interactive GIS Workspace (Leaflet map, field creation, layer overlays).
+- [x] **Phase 8**: Spatial Field Management & 3-Column Interactive GIS Workspace (Leaflet map, field creation, layer overlays) *(Completed)*.
 - [ ] **Phase 9**: AI Analysis, Evidence-Based Alert Engine & Field Health Reporting (Agronomic rules, YoY screening, locked risk, report export).
 - [ ] **Phase 10**: Comprehensive Verification, Full Test Suite, UI Polish & Final Delivery.
 

@@ -134,3 +134,29 @@ export const computeRasterIndices = async (uploadId, bandMapping, selectedIndice
   const response = await apiClient.post('/api/imagery/compute-indices', payload);
   return response.data;
 };
+
+// Spatial Field Management APIs (Phase 8)
+export const getFields = async () => {
+  const response = await apiClient.get('/api/fields');
+  return response.data;
+};
+
+export const getField = async (fieldId) => {
+  const response = await apiClient.get(`/api/fields/${fieldId}`);
+  return response.data;
+};
+
+export const createField = async (payload) => {
+  const response = await apiClient.post('/api/fields', payload);
+  return response.data;
+};
+
+export const updateField = async (fieldId, payload) => {
+  const response = await apiClient.put(`/api/fields/${fieldId}`, payload);
+  return response.data;
+};
+
+export const deleteField = async (fieldId) => {
+  const response = await apiClient.delete(`/api/fields/${fieldId}`);
+  return response.data;
+};

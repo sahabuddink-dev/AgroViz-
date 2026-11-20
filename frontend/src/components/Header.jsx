@@ -1,6 +1,7 @@
 import React from 'react';
 
 const MODULE_TITLES = {
+  workspace: 'GIS Field Workspace & Spatial Precision Monitoring',
   datasets: 'Dataset Management & Provenance Registry',
   overview: 'Overview Dashboard & Spatial Monitoring',
   weather: 'Surface Meteorology (NASA POWER MERRA-2)',

@@ -1,6 +1,7 @@
 import React from 'react';
 
 const NAV_ITEMS = [
+  { id: 'workspace', label: 'GIS Field Workspace', icon: '🗺️', status: 'Primary', badgeColor: 'green' },
   { id: 'weather', label: 'Weather Monitoring', icon: '🌦️', status: 'Live', badgeColor: 'green' },
   { id: 'soil', label: 'Soil Conditions', icon: '🌍', status: 'Live', badgeColor: 'green' },
   { id: 'crop_health', label: 'Crop Health (S2)', icon: '🛰️', status: 'Live', badgeColor: 'green' },
